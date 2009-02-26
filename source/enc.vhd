@@ -1,11 +1,12 @@
 
 use work.aes.all;
 library ieee;
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity enc is
    generic (
-      k     : key;
+      k     : key := (others => x"00");
    );
    port (
       clk   : in std_logic;
@@ -34,13 +35,15 @@ begin
    
    process(i)
    begin
-      for x in index loop
-         for y in index loop
-            o(x,y) <= sbox(to_integer(i(x,y)));
-         end loop;
-      end loop;
-      --o(0,0) <= sbox(to_integer(i(0,0)));
+      --for x in index loop
+      --   for y in index loop
+      --      o(x,y) <= sbox(to_integer(b(x,y)));
+      --   end loop;
+      --end loop;
+      b(0,0) <= sbox(to_integer(b(0,0)));
    end process;
+   
+   o <= b;
    
 end behavioral;
 
