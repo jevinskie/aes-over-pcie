@@ -11,7 +11,7 @@ use ieee.numeric_std.all;
 
 package aes is
   
-   subtype byte is std_logic_vector(7 downto 0);
+   subtype byte is unsigned(7 downto 0);
    
    type index is range 0 to 3;
    
@@ -21,6 +21,8 @@ package aes is
    end record pntr;
    
    type blk is array (index, index) of byte;
+   
+   
    
 end aes;
 
