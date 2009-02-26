@@ -7,3 +7,6 @@
 .DS_Store
 *.swp
 work/
+*.log
+*.rep
+mapped/
