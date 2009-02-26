@@ -18,7 +18,7 @@ package aes is
    type pntr is record
       i : index;
       j : index;
-   end record pointer;
+   end record pntr;
    
    type blk is array (index, index) of byte;
    
