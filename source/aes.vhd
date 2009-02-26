@@ -22,7 +22,5 @@ package aes is
    
    type blk is array (index, index) of byte;
    
-   
-   
 end aes;
 
