@@ -1,0 +1,14 @@
+http://asicdigitaldesign.wordpress.com/
+http://asicdigitaldesign.wordpress.com/2008/02/15/de-bruijn-and-maximum-length-lfsr-sequences/
+http://edipermadi.wordpress.com/2008/03/15/hardware-implementation-of-rijndael-sbox-using-logic-gates/
+http://edipermadi.wordpress.com/2008/09/15/mini-aes-in-hardware/
+http://edipermadi.wordpress.com/2008/02/28/universal-finite-field-multiplication-on-logic-gates/
+http://edipermadi.wordpress.com/2008/02/18/aes-finite-field-multiplication-on-logic-gates/
+http://edipermadi.wordpress.com/2008/02/09/cheap-aes-galois-field-gf-implementation/
+http://edipermadi.wordpress.com/2008/03/22/the-implementation-of-rijndael-mix-column-on-combinational-logic/
+http://en.wikipedia.org/wiki/Advanced_Encryption_Standard
+http://en.wikipedia.org/wiki/Rijndael_S-box
+http://en.wikipedia.org/wiki/Rijndael_mix_columns
+http://en.wikipedia.org/wiki/Rijndael_Galois_field
+http://csrc.nist.gov/archive/aes/rijndael/wsdindex.html
+http://www.quadibloc.com/crypto/co040401.htm
