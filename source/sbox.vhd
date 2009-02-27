@@ -14,7 +14,7 @@ use ieee.numeric_std.all;
 entity sbox is
    port (
       a : in byte;
-      b : out byte;
+      b : out byte
    );
 end sbox;
 
@@ -24,7 +24,7 @@ architecture dataflow of sbox is
    function square_gf4 (q : nibble)
       return nibble
    is
-      k : nibble;
+      variable k : nibble;
    begin
       k(3) := q(3);
       k(2) := q(3) xor q(2);
@@ -38,7 +38,7 @@ architecture dataflow of sbox is
    function mullambda_gf4 (q : nibble)
       return nibble
    is
-      k : nibble;
+      variable k : nibble;
    begin
       k(3) := q(2) xor q(0);
       k(2) := q(3) xor q(2) xor q(1) xor q(0);
@@ -49,10 +49,10 @@ architecture dataflow of sbox is
    end function mullambda_gf4;
    
    
-   function mul_gf2(q : pair, w : pair)
+   function mul_gf2(q : pair; w : pair)
       return pair
    is
-      k : pair;
+      variable k : pair;
    begin
       k(1) := (q(1) and w(1)) xor (q(0) and w(1)) xor (q(1) and w(0));
       k(0) := (q(1) and w(1)) xor (q(0) and w(0));
@@ -64,7 +64,7 @@ architecture dataflow of sbox is
    function mulphi_gf2(q : pair)
       return pair
    is
-      k : pair;
+      variable k : pair;
    begin
       k(1) := q(1) xor q(0);
       k(0) := q(1);
@@ -73,24 +73,24 @@ architecture dataflow of sbox is
    end function mulphi_gf2;
    
    
-   function mul_gf4(q : nibble, w : nibble)
+   function mul_gf4(q : nibble; w : nibble)
       return nibble
    is
-      qh, ql, wh, wl : pair;
-      res_top, res_mid, res_bot : pair;
-      k : nibble;
+      variable qh, ql, wh, wl : pair;
+      variable res_top, res_mid, res_bot : pair;
+      variable k : nibble;
    begin
       qh := q(3 downto 2);
       ql := q(1 downto 0);
       wh := w(3 downto 2);
       wl := w(1 downto 0);
       
-      res_phi := mulphi_gf2(mul_gf2(qh, wh));
+      res_top := mulphi_gf2(mul_gf2(qh, wh));
       res_mid := mul_gf2(qh xor ql, wh xor wl);
-      res_low := mul_gf2(ql, wl);
+      res_bot := mul_gf2(ql, wl);
       
-      k(3 downto 2) := res_mid xor res_low;
-      k(1 downto 0) := res_hi xor res_low;
+      k(3 downto 2) := res_mid xor res_bot;
+      k(1 downto 0) := res_top xor res_bot;
       
       return k;
    end function mul_gf4;
@@ -98,7 +98,7 @@ architecture dataflow of sbox is
    function iso_map(q : byte)
       return byte
    is
-      k : byte;
+      variable k : byte;
    begin
       k(7) := q(7) xor q(5);
       k(6) := q(7) xor q(6) xor q(4) xor q(3) xor q(2) xor q(1);
@@ -116,7 +116,7 @@ architecture dataflow of sbox is
    function inv_iso_map(q : byte)
       return byte
    is
-      k : byte;
+      variable k : byte;
    begin
       k(7) := q(7) xor q(6) xor q(5) xor q(1);
       k(6) := q(6) xor q(2);
@@ -134,10 +134,10 @@ architecture dataflow of sbox is
    function mulinv_gf4(q : nibble)
       return nibble
    is
-      k : nibble;
+      variable k : nibble;
    begin
       k(3) := q(3) xor (q(3) and q(2) and q(1)) xor (q(3) and q(0)) xor q(2);
-      k(2) := (q(3) and q(2) and q(1)) xor (q(3) and q(2) and q(0) xor
+      k(2) := (q(3) and q(2) and q(1)) xor (q(3) and q(2) and q(0)) xor
          (q(3) and q(0)) xor q(2) xor (q(2) and q(1));
       k(1) := q(3) xor (q(3) and q(2) and q(1)) xor (q(3) and q(1) and q(0)) xor
          q(2) xor (q(2) and q(0)) xor q(1);
@@ -152,14 +152,16 @@ architecture dataflow of sbox is
    function af(a : byte)
       return byte
    is
-      b : byte;
+      variable b : byte;
+      variable d : byte;
       constant r : byte := "11111000";
       constant c : byte := "01100011";
    begin
       for i in 0 to 7 loop
          b(i) := '0';
+         d := r ror i;
          for j in 0 to 7 loop
-            b(i) := b(i) xor (a(j) and (r ror i)(j));
+            b(i) := b(i) xor (a(j) and d(j));
          end loop;
       end loop;
       
