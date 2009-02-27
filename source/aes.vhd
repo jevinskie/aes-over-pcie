@@ -13,6 +13,7 @@ package aes is
   
    subtype byte is unsigned(7 downto 0);
    subtype nibble is unsigned(3 downto 0);
+   subtype pair is unsigned(1 downto 0);
    
    type index is range 0 to 3;
    
