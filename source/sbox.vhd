@@ -12,15 +12,15 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity sbox is
+   
    port (
-      a : in byte;
-      b : out byte
+      clk   : in std_logic;
+      nrst  : in std_logic;
+      a     : in byte;
+      b     : out byte
    );
-end sbox;
-
-architecture dataflow of sbox is
    
-   
+      
    function square_gf4 (q : nibble)
       return nibble
    is
@@ -61,6 +61,18 @@ architecture dataflow of sbox is
    end function mul_gf2;
    
    
+   function mul_alt_gf2(q : pair; w : pair)
+      return pair
+   is
+      variable k : pair;
+   begin
+      k(1) := ((q(1) xor q(0)) and (w(1) xor w(0))) xor (q(0) and w(0));
+      k(0) := (q(1) and w(1)) xor (q(0) and w(0));
+      
+      return k;
+   end function mul_alt_gf2;
+    
+   
    function mulphi_gf2(q : pair)
       return pair
    is
@@ -86,8 +98,8 @@ architecture dataflow of sbox is
       wl := w(1 downto 0);
       
       res_top := mulphi_gf2(mul_gf2(qh, wh));
-      res_mid := mul_gf2(qh xor ql, wh xor wl);
-      res_bot := mul_gf2(ql, wl);
+      res_mid := mul_alt_gf2(qh xor ql, wh xor wl);
+      res_bot := mul_alt_gf2(ql, wl);
       
       k(3 downto 2) := res_mid xor res_bot;
       k(1 downto 0) := res_top xor res_bot;
@@ -149,6 +161,35 @@ architecture dataflow of sbox is
    end function mulinv_gf4;
    
    
+   function mulinv_lut_gf4(q : nibble)
+      return nibble
+   is
+      variable k : nibble;
+   begin
+      case q is
+         when x"0" => k := x"0";
+         when x"1" => k := x"1";
+         when x"2" => k := x"3";
+         when x"3" => k := x"2";
+         when x"4" => k := x"f";
+         when x"5" => k := x"c";
+         when x"6" => k := x"9";
+         when x"7" => k := x"b";
+         when x"8" => k := x"a";
+         when x"9" => k := x"6";
+         when x"a" => k := x"8";
+         when x"b" => k := x"7";
+         when x"c" => k := x"5";
+         when x"d" => k := x"e";
+         when x"e" => k := x"d";
+         when x"f" => k := x"4";
+         when others => k := x"0";
+      end case;
+      
+      return k;
+   end function mulinv_lut_gf4;
+   
+   
    function af(a : byte)
       return byte
    is
@@ -159,7 +200,7 @@ architecture dataflow of sbox is
    begin
       for i in 0 to 7 loop
          b(i) := '0';
-         d := r ror i;
+         d := r ror (7-i);
          for j in 0 to 7 loop
             b(i) := b(i) xor (a(j) and d(j));
          end loop;
@@ -169,24 +210,29 @@ architecture dataflow of sbox is
       
       return b;
    end function af;
+
+end entity sbox;
+
+
+architecture dataflow of sbox is
    
-   signal iso : byte;
-   signal isoh, isol : nibble;
-   signal left_top, left_bot : nibble;
-   signal right_top, right_bot : nibble;
-   signal mulinv : nibble;
-   signal preaf : byte;
+   signal iso                    : byte;
+   signal isoh, isol             : nibble;
+   signal left_top, left_bot     : nibble;
+   signal right_top, right_bot   : nibble;
+   signal mulinv                 : nibble;
+   signal preaf                  : byte;
    
 begin
    
-   iso <= iso_map(a);
-   isoh <= iso(7 downto 4);
-   isol <= iso(3 downto 0);
+   iso   <= iso_map(a);
+   isoh  <= iso(7 downto 4);
+   isol  <= iso(3 downto 0);
    
    left_top <= mullambda_gf4(square_gf4(isoh));
    left_bot <= mul_gf4(isoh xor isol, isol);
    
-   mulinv <= mulinv_gf4(left_top xor left_bot);
+   mulinv <= mulinv_lut_gf4(left_top xor left_bot);
    
    right_top <= mul_gf4(mulinv, isoh);
    right_bot <= mul_gf4(mulinv, isoh xor isol);
@@ -197,8 +243,10 @@ begin
    
 end dataflow;
 
-architecture naive of sbox is
+
+architecture lut of sbox is
 begin
    b <= work.aes.sbox(to_integer(a));
-end naive;
+end lut;
+
 
