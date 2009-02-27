@@ -10,3 +10,4 @@ work/
 *.log
 *.rep
 mapped/
+*.pyc
