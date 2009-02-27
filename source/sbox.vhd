@@ -131,7 +131,67 @@ architecture dataflow of sbox is
    end function inv_iso_map;
    
    
+   function mulinv_gf4(q : nibble)
+      return nibble
+   is
+      k : nibble;
+   begin
+      k(3) := q(3) xor (q(3) and q(2) and q(1)) xor (q(3) and q(0)) xor q(2);
+      k(2) := (q(3) and q(2) and q(1)) xor (q(3) and q(2) and q(0) xor
+         (q(3) and q(0)) xor q(2) xor (q(2) and q(1));
+      k(1) := q(3) xor (q(3) and q(2) and q(1)) xor (q(3) and q(1) and q(0)) xor
+         q(2) xor (q(2) and q(0)) xor q(1);
+      k(0) := (q(3) and q(2) and q(1)) xor (q(3) and q(2) and q(0)) xor
+         (q(3) and q(1)) xor (q(3) and q(1) and q(0)) xor (q(3) and q(0)) xor
+         q(2) xor (q(2) and q(1)) xor (q(2) and q(1) and q(0)) xor q(1) xor q(0);
+      
+      return k;
+   end function mulinv_gf4;
+   
+   
+   function af(a : byte)
+      return byte
+   is
+      b : byte;
+      constant r : byte := "11111000";
+      constant c : byte := "01100011";
+   begin
+      for i in 0 to 7 loop
+         b(i) := '0';
+         for j in 0 to 7 loop
+            b(i) := b(i) xor (a(j) and (r ror i)(j));
+         end loop;
+      end loop;
+      
+      b := b xor c;
+      
+      return b;
+   end function af;
+   
+   signal iso : byte;
+   signal isoh, isol : nibble;
+   signal left_top, left_bot : nibble;
+   signal right_top, right_bot : nibble;
+   signal mulinv : nibble;
+   signal preaf : byte;
+   
 begin
+   
+   iso <= iso_map(a);
+   isoh <= iso(7 downto 4);
+   isol <= iso(3 downto 0);
+   
+   left_top <= mullambda_gf4(square_gf4(isoh));
+   left_bot <= mul_gf4(isoh xor isol, isol);
+   
+   mulinv <= mulinv_gf4(left_top xor left_bot);
+   
+   right_top <= mul_gf4(mulinv, isoh);
+   right_bot <= mul_gf4(mulinv, isoh xor isol);
+   
+   preaf <= inv_iso_map(right_top & right_bot);
+   
+   b <= af(preaf);
    
 end dataflow;
 
