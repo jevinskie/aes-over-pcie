@@ -225,7 +225,34 @@ entity sbox is
       
       return b;
    end function af;
-
+   
+   
+   function iso_inv_af(a : byte)
+      return byte
+   is
+      variable b : byte;
+      variable d : byte;
+      constant m : matrix_type :=
+         ("10001100",
+          "11110000",
+          "10000100",
+          "10010011",
+          "00000111",
+          "01111101",
+          "10000001",
+          "11000111");
+      constant c : byte := "01100011";
+   begin
+      for i in m'range loop
+         b(i) := xor_reduce(a and m(i));
+      end loop;
+      
+      b := b xor c;
+      
+      return b;
+   end function iso_inv_af;
+   
+   
 end entity sbox;
 
 
@@ -236,7 +263,6 @@ architecture dataflow of sbox is
    signal left_top, left_bot     : nibble;
    signal right_top, right_bot   : nibble;
    signal mulinv                 : nibble;
-   signal preaf                  : byte;
    
 begin
    
@@ -252,9 +278,7 @@ begin
    right_top <= mul_gf4(mulinv, isoh);
    right_bot <= mul_gf4(mulinv, isoh xor isol);
    
-   preaf <= inv_iso_map(right_top & right_bot);
-   
-   b <= af(preaf);
+   b <= iso_inv_af(right_top & right_bot);
    
 end architecture dataflow;
 
@@ -268,7 +292,6 @@ architecture pipelined of sbox is
    signal left_top_q, left_bot_q : nibble;
    signal right_top, right_bot   : nibble;
    signal mulinv                 : nibble;
-   signal preaf                  : byte;
    signal subbyte                : byte;
    
 begin
@@ -296,16 +319,14 @@ begin
    right_top <= mul_gf4(mulinv, isoh_q);
    right_bot <= mul_gf4(mulinv, isoh_q xor isol_q);
    
-   preaf <= inv_iso_map(right_top & right_bot);
-   
-   subbyte <= af(preaf);
+   subbyte <= iso_inv_af(right_top & right_bot);
    
 end architecture pipelined;
 
 
---architecture lut of sbox is
---begin
---   b <= work.aes.sbox(to_integer(a));
---end architecture lut;
+architecture lut of sbox is
+begin
+   b <= work.aes.sbox(to_integer(a));
+end architecture lut;
 
 

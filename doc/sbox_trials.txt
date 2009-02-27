@@ -5,6 +5,9 @@ alt_mulinv_g4:                9.09     184      69543
 alt_mul_g2:                   10.07    177      72261
 alt_both:                     9.35     179      69723
 pipelined_alt_both:  200MHz            282      101493      20736       122229
+pipe_both_mat:       200MHz            295      106650      20736       127386
+pipe_both_mat_comb:  200MHz            205      68238       20736       88974
+alt_both_mat_comb:            7.62     174      64341
 
 alt_mulinv_g4  uses mulinv_lut_g4
 alt_mul_g2     uses mul_alt_g2
