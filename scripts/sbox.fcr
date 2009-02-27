@@ -1,12 +1,13 @@
 # Step 1:  Read in the source file
 analyze -format vhdl -lib WORK {sbox.vhd aes.vhd}
-elaborate sbox -arch "dataflow" -lib WORK -update
+elaborate sbox -arch "pipelined" -lib WORK -update
 
 # Step 2: Set design constraints
 # Uncomment below to set timing, area, power, etc. constraints
 # set_max_delay <delay> -from "<input>" -to "<output>"
 # set_max_area <area>
 # set_max_total_power <power> mW
+create_clock "clk" -name "clk" -period 5
 
 # Step 3: Compile the design
 compile -map_effort medium

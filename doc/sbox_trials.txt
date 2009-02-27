@@ -1,0 +1,11 @@
+                     fmax     tpd      gates    comb area   reg area    total area
+lut:                          3.39     520      185742
+norm:                         10.38    197      74709
+alt_mulinv_g4:                9.09     184      69543
+alt_mul_g2:                   10.07    177      72261
+alt_both:                     9.35     179      69723
+pipelined_alt_both:  200MHz            282      101493      20736       122229
+
+alt_mulinv_g4  uses mulinv_lut_g4
+alt_mul_g2     uses mul_alt_g2
+

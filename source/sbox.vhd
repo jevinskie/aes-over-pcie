@@ -15,7 +15,6 @@ entity sbox is
    
    port (
       clk   : in std_logic;
-      nrst  : in std_logic;
       a     : in byte;
       b     : out byte
    );
@@ -241,12 +240,56 @@ begin
    
    b <= af(preaf);
    
-end dataflow;
+end architecture dataflow;
+
+
+architecture pipelined of sbox is
+   
+   signal iso                    : byte;
+   signal isoh, isol             : nibble;
+   signal isoh_q, isol_q         : nibble;
+   signal left_top, left_bot     : nibble;
+   signal left_top_q, left_bot_q : nibble;
+   signal right_top, right_bot   : nibble;
+   signal mulinv                 : nibble;
+   signal preaf                  : byte;
+   signal subbyte                : byte;
+   
+begin
+   
+   reg : process(clk)
+   begin
+      if (rising_edge(clk)) then
+         isoh_q <= isoh;
+         isol_q <= isol;
+         left_top_q <= left_top;
+         left_bot_q <= left_bot;
+         b <= subbyte;
+      end if;
+   end process reg;
+   
+   iso   <= iso_map(a);
+   isoh  <= iso(7 downto 4);
+   isol  <= iso(3 downto 0);
+   
+   left_top <= mullambda_gf4(square_gf4(isoh));
+   left_bot <= mul_gf4(isoh xor isol, isol);
+   
+   mulinv <= mulinv_lut_gf4(left_top_q xor left_bot_q);
+   
+   right_top <= mul_gf4(mulinv, isoh_q);
+   right_bot <= mul_gf4(mulinv, isoh_q xor isol_q);
+   
+   preaf <= inv_iso_map(right_top & right_bot);
+   
+   subbyte <= af(preaf);
+   
+end architecture pipelined;
 
 
 architecture lut of sbox is
 begin
    b <= work.aes.sbox(to_integer(a));
-end lut;
+end architecture lut;
 
 

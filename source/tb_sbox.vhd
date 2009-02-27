@@ -12,33 +12,54 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity tb_sbox is
+   generic (
+      clk_per  : time := 5 ns
+   );
 end tb_sbox;
 
 architecture test of tb_sbox is
    
    component sbox is
       port (
-         a : in byte;
-         b : out byte
+         clk   : in std_logic;
+         a     : in byte;
+         b     : out byte
       );
    end component sbox;
    
+   signal clk  : std_logic := '0';
    signal a, b : byte;
    
+   signal stop : std_logic := '1';
+   signal gold : byte;
 begin
    
-   sbox_b : sbox port map (
-      a => a, b => b
+   dut : sbox port map (
+      clk => clk, a => a, b => b
    );
+   
+   -- clock when stop isnt asserted
+   clk <= not clk and not stop after clk_per/2;
    
 process
 begin
    
-   for i in 0 to 255 loop
-      a <= to_unsigned(i, 8);
-      wait for 15 ns;
-      assert b = work.aes.sbox(i);
+   stop <= '0';
+   
+   for i in 0 to 256 loop
+      if (i <= 255) then
+         a <= to_unsigned(i, 8);
+      end if;
+      
+      wait for clk_per;
+      
+      if (i >= 1) then
+         gold <= work.aes.sbox(i-1);
+         assert b = work.aes.sbox(i-1);
+      end if;
    end loop;
+   
+   stop <= '1';
    
    wait;
 end process;
