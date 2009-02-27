@@ -197,3 +197,8 @@ begin
    
 end dataflow;
 
+architecture naive of sbox is
+begin
+   b <= work.aes.sbox(to_integer(a));
+end naive;
+
