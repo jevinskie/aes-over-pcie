@@ -14,7 +14,7 @@ use ieee.numeric_std.all;
 entity tb_sbox is
 end tb_sbox;
 
-architecture test of tb_test is
+architecture test of tb_sbox is
    
    component sbox is
       port (
@@ -32,11 +32,12 @@ begin
    );
    
 process
+begin
    
    for i in 0 to 255 loop
       a <= to_unsigned(i, 8);
       wait for 15 ns;
-      assert b = aes.sbox(i);
+      assert b = work.aes.sbox(i);
    end loop;
    
    wait;
