@@ -6,6 +6,7 @@
 -- Description: Rijndael S-Box
 
 use work.aes.all;
+use work.reduce_pack.all;
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -19,7 +20,10 @@ entity sbox is
       b     : out byte
    );
    
-      
+   
+   type matrix_type is array (7 downto 0) of byte;
+   
+   
    function square_gf4 (q : nibble)
       return nibble
    is
@@ -109,16 +113,20 @@ entity sbox is
    function iso_map(q : byte)
       return byte
    is
-      variable k : byte;
+      variable k     : byte;
+      constant iso   : matrix_type :=
+         ("10100000",
+          "11011110",
+          "10101100",
+          "10101110",
+          "11000110",
+          "10011110",
+          "01010010",
+          "01000011");
    begin
-      k(7) := q(7) xor q(5);
-      k(6) := q(7) xor q(6) xor q(4) xor q(3) xor q(2) xor q(1);
-      k(5) := q(7) xor q(5) xor q(3) xor q(2);
-      k(4) := q(7) xor q(5) xor q(3) xor q(2) xor q(1);
-      k(3) := q(7) xor q(6) xor q(2) xor q(1);
-      k(2) := q(7) xor q(4) xor q(3) xor q(2) xor q(1);
-      k(1) := q(6) xor q(4) xor q(1);
-      k(0) := q(6) xor q(1) xor q(0);
+      for i in iso'range loop
+         k(i) := xor_reduce(q and iso(i));
+      end loop;
       
       return k;
    end function iso_map;
@@ -127,16 +135,20 @@ entity sbox is
    function inv_iso_map(q : byte)
       return byte
    is
-      variable k : byte;
+      variable k        : byte;
+      constant iso_inv  : matrix_type :=
+         ("11100010",
+          "01000100",
+          "01100010",
+          "01110110",
+          "00111110",
+          "10011110",
+          "00110000",
+          "01110101");
    begin
-      k(7) := q(7) xor q(6) xor q(5) xor q(1);
-      k(6) := q(6) xor q(2);
-      k(5) := q(6) xor q(5) xor q(1);
-      k(4) := q(6) xor q(5) xor q(4) xor q(2) xor q(1);
-      k(3) := q(5) xor q(4) xor q(3) xor q(2) xor q(1);
-      k(2) := q(7) xor q(4) xor q(3) xor q(2) xor q(1);
-      k(1) := q(5) xor q(4);
-      k(0) := q(6) xor q(5) xor q(4) xor q(2) xor q(0);
+      for i in iso_inv'range loop
+         k(i) := xor_reduce(q and iso_inv(i));
+      end loop;
       
       return k;
    end function inv_iso_map;
@@ -194,15 +206,19 @@ entity sbox is
    is
       variable b : byte;
       variable d : byte;
-      constant r : byte := "11111000";
+      constant m : matrix_type :=
+         ("11111000",
+          "01111100",
+          "00111110",
+          "00011111",
+          "10001111",
+          "11000111",
+          "11100011",
+          "11110001");
       constant c : byte := "01100011";
    begin
-      for i in 0 to 7 loop
-         b(i) := '0';
-         d := r ror (7-i);
-         for j in 0 to 7 loop
-            b(i) := b(i) xor (a(j) and d(j));
-         end loop;
+      for i in m'range loop
+         b(i) := xor_reduce(a and m(i));
       end loop;
       
       b := b xor c;
@@ -287,9 +303,9 @@ begin
 end architecture pipelined;
 
 
-architecture lut of sbox is
-begin
-   b <= work.aes.sbox(to_integer(a));
-end architecture lut;
+--architecture lut of sbox is
+--begin
+--   b <= work.aes.sbox(to_integer(a));
+--end architecture lut;
 
 

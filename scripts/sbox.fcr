@@ -1,5 +1,5 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {sbox.vhd aes.vhd}
+analyze -format vhdl -lib WORK {sbox.vhd aes.vhd reduce_pack.vhd}
 elaborate sbox -arch "pipelined" -lib WORK -update
 
 # Step 2: Set design constraints
