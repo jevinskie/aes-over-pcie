@@ -11,3 +11,8 @@ work/
 *.rep
 mapped/
 *.pyc
+alib-51/
+analyzed/
+default.svf
+transcript
+vsim.wlf
