@@ -1,0 +1,2 @@
+#!/bin/csh -f
+dc_shell-t -f ./scripts/bus_test.fcr | tee bus_test.log
