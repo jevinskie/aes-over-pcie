@@ -13,7 +13,7 @@ use ieee.numeric_std.all;
 
 entity enc is
    generic (
-      k     : key := (others => x"00");
+      k     : key := (others => x"00")
    );
    port (
       clk   : in std_logic;
