@@ -15,9 +15,9 @@ use ieee.numeric_std.all;
 
 entity shift_rows is
     port (clk        : in std_logic;
-          data_in       : in slice;
+          data_in    : in slice;
           num_shifts : in shift_amount;
-          data_out      : out slice
+          data_out   : out slice
           );
 
 architecture dataflow of shift_rows is
