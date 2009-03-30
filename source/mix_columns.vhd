@@ -15,8 +15,8 @@ entity mix_columns is
    
    port(
       clk   : in std_logic;
-      d_in  : in col;
-      d_out : out col
+      d_in  : in slice;
+      d_out : out slice
    );
    
 end mix_columns;
@@ -35,7 +35,7 @@ architecture dataflow of mix_columns is
    -- r2 = 2a2 + a1 + a0 + 3a3
    -- r3 = 2a3 + a2 + a1 + 3a0
    
-   signal b : col;
+   signal b : slice;
 
 begin
    

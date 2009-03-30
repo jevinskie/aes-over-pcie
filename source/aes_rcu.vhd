@@ -17,7 +17,7 @@ entity aes_rcu is
       clk      : in std_logic;
       nrst     : in std_logic;
       p        : out g_index;
-      p_type   : out g_index_type
+      subblock : out subblock_type 
    );
    
 end entity aes_rcu;

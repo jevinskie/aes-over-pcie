@@ -22,7 +22,7 @@ entity enc is
       i_rdy : in std_logic;
       i     : in byte;
       o_rdy : out std_logic;
-      o     : out blk
+      o     : out state
    );
 end enc;
 
@@ -36,7 +36,7 @@ architecture behavioral of enc is
    type round_state_type is (subbytes, mixcols, mixmul, addkey);
    signal round_state, next_round_state : round_state_type;
    
-   signal b : blk;
+   signal b : state;
 begin
    
    
