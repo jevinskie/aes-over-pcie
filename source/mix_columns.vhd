@@ -39,11 +39,13 @@ architecture dataflow of mix_columns is
 
 begin
    
+   --multiply by 2 is done with a left shift
    b(0) <= d_in(0) sll 1;
    b(1) <= d_in(1) sll 1;
    b(2) <= d_in(2) sll 1;
    b(3) <= d_in(3) sll 1;
    
+   --when multiply by 3 is needed, we can break that into x*(2x)
    d_out(0) <= b(0) xor d_in(3) xor d_in(2) xor b(1) xor d_in(1); --8e
    d_out(1) <= b(1) xor d_in(0) xor d_in(3) xor b(2) xor d_in(2); --4d
    d_out(2) <= b(2) xor d_in(1) xor d_in(0) xor b(3) xor d_in(3); --a1 
