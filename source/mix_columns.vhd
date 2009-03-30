@@ -21,7 +21,7 @@ entity mix_columns is
    
 end mix_columns;
 
-architecture dataflow of mix_columns is
+architecture behavioral of mix_columns is
    
    -- Rijndael mix columns matrix
    -- [ r0 ]      [ 2   3   1   1 ] [ a0 ]
@@ -55,5 +55,5 @@ begin
       d_out(2) <= b(2) xor d_in(1) xor d_in(0) xor b(3) xor d_in(3); 
       d_out(3) <= b(3) xor d_in(2) xor d_in(1) xor b(0) xor d_in(0);
    end process;
-end architecture dataflow;
+end architecture behavioral;
 
