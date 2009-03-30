@@ -21,7 +21,7 @@ entity mix_columns is
    
 end mix_columns;
 
-architecture dataflow of mix_columns is
+architecture behavioral of mix_columns is
    
    -- Rijndael mix columns matrix
    -- [ r0 ]      [ 2   3   1   1 ] [ a0 ]
@@ -44,7 +44,7 @@ begin
       --Algo: check if upper nibble of d_in(1) = 0x80, if so b(i) = b(i) XOR 0x1b
       for i in 0 to 3 loop
          b(i) := d_in(i) sll 1;
-         if std_match(d_in(i), "1000----") then
+         if std_match(d_in(i), "1-------") then 
             b(i) := (b(i) xor x"1b");
          end if;
       end loop;
@@ -55,5 +55,5 @@ begin
       d_out(2) <= b(2) xor d_in(1) xor d_in(0) xor b(3) xor d_in(3); 
       d_out(3) <= b(3) xor d_in(2) xor d_in(1) xor b(0) xor d_in(0);
    end process;
-end architecture dataflow;
+end architecture behavioral;
 

@@ -65,7 +65,7 @@ process
 -- Insert TEST BENCH Code Here
 
     clk <= '0';
-
+    
     d_in <= (x"DB", x"13", x"53", x"45");
     wait for 10 ns;
     d_in <= (x"f2", x"0a", x"22", x"5c");
