@@ -22,6 +22,10 @@ package aes is
       j : index;
    end record pntr;
    
+   type g_index is range 0 to 15;
+   
+   type g_index_type is (r, c, b);
+   
    type blk is array (index, index) of byte;
    
    type key is array (0 to 16) of byte;
