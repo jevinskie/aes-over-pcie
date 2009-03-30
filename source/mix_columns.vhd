@@ -37,7 +37,7 @@ architecture behavioral of mix_columns is
    
 begin
    process(d_in)      
-     variable b : col;   --temp calculation variable
+     variable b : slice;   --temp calculation variable
       begin
       --multiply by 2 is done with a left shift   
       --need Galois field correction for b here; i.e. b(i) must be 8-bits still
