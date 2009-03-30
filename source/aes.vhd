@@ -26,6 +26,10 @@ package aes is
    
    type key is array (0 to 16) of byte;
    
+   type row is array (0 to 3) of byte;
+   
+   type col is array (0 to 3) of byte;
+   
    type sbox_array is array (0 to 255) of byte;
    constant sbox : sbox_array :=
       (
