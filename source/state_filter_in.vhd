@@ -25,7 +25,7 @@ entity state_filter_in is
 end entity state_filter_in;
 
 
-architecture dataflow of state_filter_in is
+architecture behavioral of state_filter_in is
    
 begin
    
@@ -57,5 +57,5 @@ begin
       end case;
    end process;
    
-end architecture dataflow;
+end architecture behavioral;
 

@@ -1,0 +1,2 @@
+#!/bin/csh -f
+dc_shell-t -f ./scripts/state_filter_out.fcr | tee state_filter_out.log

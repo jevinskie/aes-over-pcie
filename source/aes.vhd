@@ -25,7 +25,8 @@ package aes is
    subtype g_index is integer range 0 to 15;
    
    type subblock_type is
-      (identity, sub_bytes, mix_columns, shift_rows, add_key);
+      (identity, sub_bytes, mix_columns,
+       shift_rows, add_key, load);
    
    subtype round is integer range 1 to 9;
    
@@ -36,6 +37,8 @@ package aes is
    type key is array (0 to 16) of byte;
    
    type slice is array (0 to 3) of byte;
+   alias row is slice;
+   alias col is slice;
    
    type sbox_array is array (0 to 255) of byte;
    constant sbox : sbox_array :=
