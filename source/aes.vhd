@@ -30,13 +30,11 @@ package aes is
    
    subtype round is integer range 1 to 9;
    
-   subtype shift_amount is integer range 0 to 3;
-   
    type state is array (index, index) of byte;
    
    type key is array (0 to 16) of byte;
    
-   type slice is array (0 to 3) of byte;
+   type slice is array (index) of byte;
    alias row is slice;
    alias col is slice;
    

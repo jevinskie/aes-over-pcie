@@ -16,7 +16,7 @@ entity shift_rows is
    
    port (
       data_in     : in row;
-      num_shifts  : in shift_amount;
+      num_shifts  : in index;
       data_out    : out row
    );
    
@@ -35,7 +35,7 @@ begin
    
    process(data_in, num_shifts)
    begin
-      for k in 0 to 3 loop
+      for k in index loop
          data_out(k) <= data_in((num_shifts + k) mod 4);
       end loop;
    end process;

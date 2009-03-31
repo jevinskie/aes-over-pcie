@@ -1,0 +1,2 @@
+#!/bin/csh -f
+dc_shell-t -f ./scripts/shift_rows.fcr | tee shift_rows.log

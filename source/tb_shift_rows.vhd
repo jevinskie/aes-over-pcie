@@ -20,13 +20,13 @@ end entity tb_shift_rows;
 architecture test of tb_shift_rows is
    
    signal data_in    : row;
-   signal num_shifts : shift_amount;
+   signal num_shifts : index;
    signal data_out   : row;
    
    
    type test_sample is record
       r     : row;
-      num   : shift_amount;
+      num   : index;
       gold  : row;
    end record test_sample;
    
