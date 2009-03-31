@@ -12,20 +12,14 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity tb_sbox is
+   
    generic (
-      clk_per  : time := 5 ns
+      clk_per  : time := 4 ns
    );
-end tb_sbox;
+   
+end entity tb_sbox;
 
 architecture test of tb_sbox is
-   
-   --component sbox is
-   --   port (
-   --      clk   : in std_logic;
-   --      a     : in byte;
-   --      b     : out byte
-   --   );
-   --end component sbox;
    
    signal clk              : std_logic := '0';
    signal lut_a, lut_b     : byte;
@@ -84,7 +78,8 @@ begin
    stop <= '1';
    
    wait;
+   
 end process;
 
-end test;
+end architecture test;
 

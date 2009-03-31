@@ -1,6 +1,5 @@
--- $Id: 17
 -- File name:   tb_mix_columns.vhd
--- Created:     3/30/2009
+-- Created:     2009-03-30
 -- Author:      Zachary Curosh
 -- Lab Section: 337-02
 -- Version:     1.0  Initial Test Bench
@@ -8,76 +7,68 @@
 use work.aes.all;
 
 library ieee;
---library gold_lib;   --UNCOMMENT if you're using a GOLD model
 use ieee.std_logic_1164.all;
---use gold_lib.all;   --UNCOMMENT if you're using a GOLD model
 
 entity tb_mix_columns is
-end tb_mix_columns;
+   
+   generic (
+      clk_per  : time := 4 ns
+   );
+   
+end entity tb_mix_columns;
 
-architecture TEST of tb_mix_columns is
-
-  function INT_TO_STD_LOGIC( X: INTEGER; NumBits: INTEGER )
-     return STD_LOGIC_VECTOR is
-    variable RES : STD_LOGIC_VECTOR(NumBits-1 downto 0);
-    variable tmp : INTEGER;
-  begin
-    tmp := X;
-    for i in 0 to NumBits-1 loop
-      if (tmp mod 2)=1 then
-        res(i) := '1';
-      else
-        res(i) := '0';
-      end if;
-      tmp := tmp/2;
-    end loop;
-    return res;
-  end;
-
-  component mix_columns
-    PORT(
-         clk : in std_logic;
-         d_in : in slice;
-         d_out : out slice
-    );
-  end component;
-
--- Insert signals Declarations here
-  signal clk : std_logic;
-  signal d_in : slice;
-  signal d_out : slice;
-
--- signal <name> : <type>;
-
+architecture test of tb_mix_columns is
+   
+   signal d_in    : col;
+   signal d_out   : col;
+   
+   type test_sample is record
+      input : col;
+      gold  : col;
+   end record test_sample;
+      
+   type sample_array is array (natural range <>) of test_sample;
+   constant test_samples : sample_array :=
+   (
+      ((x"db", x"13", x"53", x"45"),
+       (x"8e", x"4d", x"a1", x"bc")),
+      
+      ((x"f2", x"0a", x"22", x"5c"),
+       (x"9f", x"dc", x"58", x"9d")),
+      
+      ((x"01", x"01", x"01", x"01"),
+       (x"01", x"01", x"01", x"01")),
+      
+      ((x"c6", x"c6", x"c6", x"c6"),
+       (x"c6", x"c6", x"c6", x"c6")),
+      
+      ((x"d4", x"d4", x"d4", x"d5"),
+       (x"d5", x"d5", x"d7", x"d6")),
+      
+      ((x"2d", x"26", x"31", x"4c"),
+       (x"4d", x"7e", x"bd", x"f8"))
+   );
+   
 begin
-  DUT: mix_columns port map(
-                clk => clk,
-                d_in => d_in,
-                d_out => d_out
-                );
-
---   GOLD: <GOLD_NAME> port map(<put mappings here>);
-
+   
+   dut : entity work.mix_columns(behavioral)
+      port map (
+         d_in => d_in, d_out => d_out
+      );
+   
 process
-
-  begin
-
--- Insert TEST BENCH Code Here
-
-    clk <= '0';
-    
-    d_in <= (x"DB", x"13", x"53", x"45");
-    wait for 10 ns;
-    d_in <= (x"f2", x"0a", x"22", x"5c");
-    wait for 10 ns;
-    d_in <= (x"01", x"01", x"01", x"01");
-    wait for 10 ns;
-    d_in <= (x"c6", x"c6", x"c6", x"c6");
-    wait for 10 ns;
-    d_in <= (x"d4", x"d4", x"d4", x"d5");
-    wait for 10 ns;
-    d_in <= (x"2d", x"26", x"31", x"4c");
-    
+begin
+   
+   for i in test_samples'range loop
+      d_in <= test_samples(i).input;
+      wait for clk_per;
+      assert d_out = test_samples(i).gold
+         report "dout = test_samples(i).gold check";
+   end loop;
+   
    wait;
-  end process;
-end TEST;
+
+end process;
+
+end architecture test;
+
