@@ -19,6 +19,7 @@ entity shift_rows is
           num_shifts : in shift_amount;
           data_out   : out slice
           );
+end shift_rows;
 
 architecture dataflow of shift_rows is
     
@@ -29,11 +30,10 @@ architecture dataflow of shift_rows is
     -- row 4: shift 3 : [a30, a31, a32, a33] --> [a33, a30, a31, a32]
     
 begin
-    process(r_in, num_shifts)
+    process(data_in, num_shifts)
         begin
-            data_out <= data_in when num_shifts='0';
-            data_out <= (data_in rol 1) when num_shifts='1';
-            data_out <= (data_in rol 2) when num_shifts='2';
-            data_out <= (data_in rol 3) when num_shifts='3';
+            for k in 0 to 3 loop
+               data_out(k) <= data_in((num_shifts + k) mod 4);
+           end loop;
     end process;
  end dataflow;

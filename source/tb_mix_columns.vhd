@@ -37,15 +37,15 @@ architecture TEST of tb_mix_columns is
   component mix_columns
     PORT(
          clk : in std_logic;
-         d_in : in col;
-         d_out : out col
+         d_in : in slice;
+         d_out : out slice
     );
   end component;
 
 -- Insert signals Declarations here
   signal clk : std_logic;
-  signal d_in : col;
-  signal d_out : col;
+  signal d_in : slice;
+  signal d_out : slice;
 
 -- signal <name> : <type>;
 
