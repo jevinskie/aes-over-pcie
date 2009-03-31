@@ -7,7 +7,9 @@ elaborate state_filter_out -arch "mux" -lib WORK -update
 # set_max_delay <delay> -from "<input>" -to "<output>"
 # set_max_area <area>
 # set_max_total_power <power> mW
-create_clock "clk" -name "clk" -period 5
+create_clock -name pseudo -period 4
+set_input_delay 0 -clock pseudo [all_inputs]
+set_output_delay 0 -clock pseudo [all_outputs]
 
 # Step 3: Compile the design
 compile -map_effort medium

@@ -14,8 +14,6 @@ use ieee.numeric_std.all;
 entity state_filter_out is
    
    port (
-      clk               : in std_logic;
-      nrst              : in std_logic;
       current_state     : in state;
       sub_bytes_out     : in byte;
       shift_rows_out    : in row;
@@ -40,32 +38,38 @@ begin
          for y in index loop
             case subblock is
                when identity =>
+                  -- select all the current bytes
                   next_state(x, y) <= current_state(x, y);
                when sub_bytes =>
+                  -- dont select the indexed byte
                   if (x * 4 + y /= i) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
                when shift_rows =>
+                  -- dont select the indexed row
                   if (x /= i / 4) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
                when mix_columns =>
+                  -- dont select the indexed column
                   if (y /= i mod 4) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
                when add_key =>
+                  -- dont select the indexed byte
                   if (x * 4 + y /= i) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
                when load =>
+                  -- dont select the indexed byte
                   if (x * 4 + y /= i) then
                      next_state(x, y) <= current_state(x, y);
                   else
@@ -85,6 +89,7 @@ begin
          for y in index loop
             case subblock is
                when sub_bytes =>
+                  -- select just the indexed byte
                   if (x * 4 + y = i) then
                      next_state(x, y) <= sub_bytes_out;
                   else
@@ -104,6 +109,7 @@ begin
          for y in index loop
             case subblock is
                when shift_rows =>
+                  -- select just the indexed row
                   if (x = i) then
                      next_state(x, y) <= shift_rows_out(y);
                   else
@@ -123,6 +129,7 @@ begin
          for y in index loop
             case subblock is
                when mix_columns =>
+                  -- select just the indexed column
                   if (y = i) then
                      next_state(x, y) <= mix_columns_out(x);
                   else
@@ -142,6 +149,7 @@ begin
          for y in index loop
             case subblock is
                when add_key =>
+                  -- select just the indexed byte
                   if (x * 4 + y = i) then
                      next_state(x, y) <= add_key_out;
                   else
@@ -161,6 +169,7 @@ begin
          for y in index loop
             case subblock is
                when load =>
+                  -- select just the indexed byte
                   if (x * 4 + y = i) then
                      next_state(x, y) <= load_out;
                   else
@@ -175,8 +184,13 @@ begin
    
 end architecture tristate;
 
+
+
+
 architecture mux of state_filter_out is
+   
 begin
+   
    process(current_state, sub_bytes_out, shift_rows_out,
       mix_columns_out, add_key_out, load_out, subblock, i)
    begin
@@ -217,5 +231,6 @@ begin
          end loop;
       end loop;
    end process;
+   
 end architecture mux;
 

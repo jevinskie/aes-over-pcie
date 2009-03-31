@@ -14,8 +14,6 @@ use ieee.numeric_std.all;
 entity state_filter_in is
    
    port (
-      clk      : in std_logic;
-      nrst     : in std_logic;
       s        : in state;
       subblock : in subblock_type;
       i        : in g_index;
@@ -30,30 +28,38 @@ architecture behavioral of state_filter_in is
 begin
    
    process(i, subblock, s)
+      variable r, c : index;
+      variable i_clamped : index;
    begin
+      -- by default output dont cares
+      for j in index loop
+         d_out(j) <= (others => 'X');
+      end loop;
+      
+      i_clamped := to_integer(resize(to_unsigned(i, 4), 2));
+      
+      r := to_integer(to_unsigned(i / 4, 2));
+      c := to_integer(to_unsigned(i mod 4, 2));
+      
       case subblock is
          when sub_bytes =>
-            d_out(0) <= s(i / 4, i mod 4);
-            for j in 1 to 3 loop
-               d_out(j) <= (others => '-');
-            end loop;
+            -- output the indexed byte
+            d_out(0) <= s(r, c);
          when shift_rows =>
-            for j in 0 to 3 loop
-               d_out(j) <= s(j, i);
+            -- output the indexed row
+            for j in index loop
+               d_out(j) <= s(j, i_clamped);
             end loop;
          when mix_columns =>
-            for j in 0 to 3 loop
-               d_out(j) <= s(i, j);
+            -- output the indexed column
+            for j in index loop
+               d_out(j) <= s(i_clamped, j);
             end loop;
          when add_key =>
-            d_out(0) <= s(i / 4, i mod 4);
-            for j in 1 to 3 loop
-               d_out(j) <= (others => '-');
-            end loop;
+            -- output the indexed byte
+            d_out(0) <= s(r, c);
          when others =>
-            for j in 0 to 3 loop
-               d_out(j) <= (others => '-');
-            end loop;
+            -- dont care - already done at the top
       end case;
    end process;
    
