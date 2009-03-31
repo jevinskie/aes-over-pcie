@@ -1,6 +1,5 @@
--- $Id: $
 -- File name:   tb_shift_rows.vhd
--- Created:     3/30/2009
+-- Created:     2009-03-30
 -- Author:      Zachary Curosh
 -- Lab Section: 337-02
 -- Version:     1.0  Initial Test Bench
@@ -8,82 +7,76 @@
 use work.aes.all;
 
 library ieee;
---library gold_lib;   --UNCOMMENT if you're using a GOLD model
 use ieee.std_logic_1164.all;
---use gold_lib.all;   --UNCOMMENT if you're using a GOLD model
 
 entity tb_shift_rows is
-end tb_shift_rows;
+   
+   generic (
+      clk_per  : time := 4 ns
+   );
+   
+end entity tb_shift_rows;
 
-architecture TEST of tb_shift_rows is
-
-  function INT_TO_STD_LOGIC( X: INTEGER; NumBits: INTEGER )
-     return STD_LOGIC_VECTOR is
-    variable RES : STD_LOGIC_VECTOR(NumBits-1 downto 0);
-    variable tmp : INTEGER;
-  begin
-    tmp := X;
-    for i in 0 to NumBits-1 loop
-      if (tmp mod 2)=1 then
-        res(i) := '1';
-      else
-        res(i) := '0';
-      end if;
-      tmp := tmp/2;
-    end loop;
-    return res;
-  end;
-
-  component shift_rows
-    PORT(
-         clk : in std_logic;
-         data_in : in slice;
-         num_shifts : in shift_amount;
-         data_out : out slice
-    );
-  end component;
-
--- Insert signals Declarations here
-  signal clk : std_logic;
-  signal data_in : slice;
-  signal num_shifts : shift_amount;
-  signal data_out : slice;
-
--- signal <name> : <type>;
-
+architecture test of tb_shift_rows is
+   
+   signal data_in    : row;
+   signal num_shifts : shift_amount;
+   signal data_out   : row;
+   
+   
+   type test_sample is record
+      r     : row;
+      num   : shift_amount;
+      gold  : row;
+   end record test_sample;
+   
+   
+   type sample_array is array (natural range <>) of test_sample;
+   constant test_samples : sample_array :=
+   (
+      ((x"db", x"13", x"53", x"45"), 0,
+       (x"db", x"13", x"53", x"45")),
+      
+      ((x"f2", x"0a", x"22", x"5c"), 1,
+       (x"0a", x"22", x"5c", x"f2")),
+      
+      ((x"a3", x"01", x"b3", x"09"), 2,
+       (x"b3", x"09", x"a3", x"01")),
+      
+      ((x"c7", x"d6", x"c6", x"a6"), 3,
+       (x"a6", x"c7", x"d6", x"c6")),
+      
+      ((x"d4", x"d3", x"d4", x"d5"), 1,
+       (x"d3", x"d4", x"d5", x"d4")),
+      
+      ((x"2d", x"26", x"31", x"4c"), 2,
+       (x"31", x"4c", x"2d", x"26"))
+   );
+   
+   
 begin
-  DUT: shift_rows port map(
-                clk => clk,
-                data_in => data_in,
-                num_shifts => num_shifts,
-                data_out => data_out
-                );
-
---   GOLD: <GOLD_NAME> port map(<put mappings here>);
-
+   
+   dut : entity work.shift_rows(dataflow)
+      port map (
+         data_in => data_in,
+         num_shifts => num_shifts,
+         data_out => data_out
+      );
+   
 process
-   begin
-       
-    clk <= '0';
-       
-    data_in <= (x"DB", x"13", x"53", x"45");
-    num_shifts <= 0;
-    wait for 10 ns;
-    data_in <= (x"f2", x"0a", x"22", x"5c");
-    num_shifts <= 1;
-    wait for 10 ns;
-    data_in <= (x"a3", x"01", x"b3", x"09");
-    num_shifts <= 2;
-    wait for 10 ns;
-    data_in <= (x"c7", x"d6", x"c6", x"a6");
-    num_shifts <= 3;
-    wait for 10 ns;
-    data_in <= (x"d4", x"d3", x"d4", x"d5");
-    num_shifts <= 1;
-    wait for 10 ns;
-    data_in <= (x"2d", x"26", x"31", x"4c");
-    num_shifts <=2;
-    
-    wait;
-  end process;
-end TEST;
+begin
+   
+   for i in test_samples'range loop
+      data_in <= test_samples(i).r;
+      num_shifts <= test_samples(i).num;
+      wait for clk_per;
+      assert data_out = test_samples(i).gold
+         report "data_out = test_samples(i).gold check";
+   end loop;
+   
+   wait;
+   
+end process;
+
+end architecture test;
+

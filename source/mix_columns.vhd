@@ -26,10 +26,10 @@ architecture behavioral of mix_columns is
 begin
    
    -- Rijndael mix columns matrix
-   -- [ r0 ]      [ 2   3   1   1 ] [ a0 ]
+   -- [ r0 ]  =   [ 2   3   1   1 ] [ a0 ]
    -- [ r1 ]  =   [ 1   2   3   1 ] [ a1 ]
-   -- [ r2 ]      [ 1   1   2   3 ] [ a2 ]
-   -- [ r3 ]      [ 3   1   1   2 ] [ a3 ]
+   -- [ r2 ]  =   [ 1   1   2   3 ] [ a2 ]
+   -- [ r3 ]  =   [ 3   1   1   2 ] [ a3 ]
    --
    -- Note: addition -> XOR
    -- r0 = 2a0 + a3 + a2 + 3a1
@@ -48,7 +48,7 @@ begin
 
       for i in index loop
          b(i) := d_in(i) sll 1;
-         if std_match(d_in(i), "1-------") then
+         if d_in(i)(7) = '1' then
             b(i) := (b(i) xor x"1b");
          end if;
       end loop;

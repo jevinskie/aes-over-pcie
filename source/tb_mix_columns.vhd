@@ -26,7 +26,10 @@ architecture test of tb_mix_columns is
       input : col;
       gold  : col;
    end record test_sample;
-      
+   
+   
+   -- source: http://en.wikipedia.org/wiki/Rijndael_mix_columns
+   
    type sample_array is array (natural range <>) of test_sample;
    constant test_samples : sample_array :=
    (
