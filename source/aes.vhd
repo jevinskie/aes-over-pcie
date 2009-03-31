@@ -28,11 +28,11 @@ package aes is
       (identity, sub_bytes, mix_columns,
        shift_rows, add_key, load);
    
-   subtype round is integer range 1 to 9;
+   subtype round is integer range 0 to 10;
    
    type state is array (index, index) of byte;
    
-   type key is array (0 to 16) of byte;
+   type key is array (0 to 15) of byte;
    
    type slice is array (index) of byte;
    alias row is slice;
