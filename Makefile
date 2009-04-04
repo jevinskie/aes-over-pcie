@@ -3,6 +3,8 @@ MAPPEDDIR = mapped
 WORKDIR = work
 SCRIPTDIR = scripts
 
+CFLAGS = -quiet
+
 ENTITIES =	add_round_key		\
 				aes_rcu				\
 				aes_top				\
@@ -28,13 +30,49 @@ TEST_ENTITIES =	tb_add_round_key	\
 						tb_shift_rows
 
 
+ENTITY_DIRS = $(foreach ent,$(ENTITIES),$(WORKDIR)/$(ent))
+TEST_ENTITY_DIRS = $(foreach test,$(TEST_ENTITIES),$(WORKDIR)/$(test))
+ENTITY_SRCS = $(foreach ent,$(ENTITIES),$(SRCDIR)/$(ent).vhd)
+TEST_ENTITY_SRCS = $(foreach test,$(TEST_ENTITES),$(SRCDIR)/$(test).vhd)
+
+.PHONEY : clean_source clean_mapped all_source $(ENTITIES) $(TEST_ENTITIES)
 
 clean_source:
-	reg_dirs := $(foreach ent,$(ENTITIES),$(WORKDIR)/$(ent))
-	test_dirs := $(foreach test,$(TEST_ENTITIES),$(WORKDIR)/$(test))
-	rm -rf $(reg_dirs) $(test_dirs)
-
+	rm -rf work
+	
 clean_mapped:
 	@echo fill me in
 
+add_round_key: aes
+aes_rcu: aes
+aes_top: aes add_round_key aes_rcu key_scheduler	\
+	mix_columns sbox shift_rows state_filter_in		\
+	state_filter_out state
+key_scheduler: aes
+mix_columns: aes
+sbox: aes reduce_pack
+shift_rows: aes
+state_filter_in: aes
+state_filter_out: aes
+state: aes
+
+tb_add_round_key: aes
+tb_bus_test:
+tb_counters:
+tb_mix_columns: aes
+tb_sbox: aes
+tb_shift_rows: aes
+
+work:
+	vlib $(WORKDIR)
+
+$(ENTITIES) : % : $(WORKDIR)/%
+$(TEST_ENTITIES) : % : $(WORKDIR)/%
+
+$(WORKDIR)/%: work
+	vcom $(CFLAGS) -work $(WORKDIR) $(SRCDIR)/$(notdir $@).vhd
+
+all_source: $(ENTITIES)
+
+all_test: $(TEST_ENTITIES)
 

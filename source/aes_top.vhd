@@ -28,6 +28,8 @@ architecture structural of aes_top is
    signal i                   : index;
    signal num_shifts          : index;
    signal filtered            : slice;
+	signal round_key				: key;
+	signal enc_key					: key;
    signal sub_bytes_out       : byte;
    signal shift_rows_out      : row;
    signal mix_columns_out     : col;
@@ -44,7 +46,7 @@ begin
    
    state_filter_in_b : entity work.state_filter_in(behavioral) port map (
       s => state_d, subblock => subblock, i => i, d_out => filtered,
-      filtered_key => filtered_key
+      filtered_key => filtered_key, round_key => round_key
    );
    
    state_filter_out_b : entity work.state_filter_out(mux) port map (
@@ -52,7 +54,7 @@ begin
       shift_rows_out => shift_rows_out, mix_columns_out => mix_columns_out,
       add_round_key_out => add_round_key_out, load_out => load_out,
       subblock => subblock, i => i, next_state => state_q
-   );
+	);
    
    sub_bytes_b : entity work.sbox(dataflow) port map (
       clk => clk, a => filtered(0), b => sub_bytes_out
