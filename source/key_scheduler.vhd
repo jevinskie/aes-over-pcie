@@ -21,7 +21,7 @@ entity key_scheduler is
           encryption_key: in key;
           round_key: out key;
           go : in std_logic; 
-          store: in std_logic     
+          done : out std_logic     
           );
    
    type rcon_array is array (0 to 10) of byte;     
@@ -35,10 +35,12 @@ end key_scheduler;
 
 architecture behavioral of key_scheduler is
     type states is (IDLE, SETUP, SETUP2, SETUP3, SETUP4, SETUP5, COMPUTE,
-                    COMPUTE2, COMPUTE3, COMPUTE4, SETUP2b, SETUP3b, SETUP4b);
+                    COMPUTE2, COMPUTE3, COMPUTE4, SETUP2b, SETUP3b, SETUP4b,
+                    STOREKEY);
     signal state, nextstate: states;
     signal stored_key, next_stored_key : key;
     signal int_col, test : col;
+    signal store: std_logic;
 
 begin
     
@@ -58,6 +60,8 @@ begin
     process(sbox_return,iteration,store,encryption_key,state)
         variable word0, word1, word2, word3, rotword : col;
     begin
+       store <= '0';
+       done <= '0';
        case state is
            when IDLE =>
                 if (go = '1') then
@@ -142,9 +146,14 @@ begin
                     next_stored_key(i+8) <= word2(i);
                     next_stored_key(i+12) <= word3(i);
                  end loop;
-                 nextstate <= IDLE;          
+                 nextstate <= STOREKEY;
+            when STOREKEY =>
+                  store <= '1';   
+                  done <= '1';
+                  nextstate <= IDLE;       
             end case;    
     
     end process;
     
+    round_key <= stored_key;
 end behavioral;

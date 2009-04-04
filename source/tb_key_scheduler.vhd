@@ -28,11 +28,9 @@ architecture TEST of tb_key_scheduler is
   signal encryption_key : key;
   signal round_key : key;
   signal go : std_logic;
-  signal store : std_logic;
-  
    -- clock only runs when stop isnt asserted
   signal stop             : std_logic := '1';
-
+  signal done : std_logic;
 -- signal <name> : <type>;
 
 begin
@@ -45,7 +43,7 @@ begin
                 encryption_key => encryption_key,
                 round_key => round_key,
                 go => go,
-                store => store
+                done => done
                 );
                 
   data : entity work.sbox(dataflow) port map (
@@ -68,7 +66,6 @@ process
    wait for clk_per*2;
    rst <= '0';
    wait for clk_per;
-   store <= '0';
 
 -- Insert TEST BENCH Code Here
 
@@ -87,12 +84,10 @@ process
     wait for clk_per;
     go <= '0';
     wait for clk_per*20;
-    store <= '1';
     wait for clk_per*2;
     
      
     for i in 1 to 10 loop
-       store <= '0';
        go <= '1';
        iteration <= i;
        wait for clk_per;
@@ -100,7 +95,6 @@ process
        wait for clk_per*4;
        go <= '0';
        wait for clk_per*20;
-       store <= '1';
        wait for clk_per*2;
    end loop;
     
