@@ -14,10 +14,12 @@ use ieee.numeric_std.all;
 entity state_filter_in is
    
    port (
-      s        : in state;
-      subblock : in subblock_type;
-      i        : in g_index;
-      d_out    : out slice
+      s              : in state_type;
+      subblock       : in subblock_type;
+      round_key      : in key;
+      i              : in g_index;
+      d_out          : out slice;
+      filtered_key   : out byte
    );
    
 end entity state_filter_in;
@@ -35,6 +37,8 @@ begin
       for j in index loop
          d_out(j) <= (others => '-');
       end loop;
+      
+      filtered_key <= (others => '-');
       
       i_clamped := to_integer(resize(to_unsigned(i, 4), 2));
       
@@ -58,6 +62,7 @@ begin
          when add_round_key =>
             -- output the indexed byte
             d_out(0) <= s(r, c);
+            filtered_key <= k(r*4 + c);
          when others =>
             -- dont care - already done at the top
       end case;

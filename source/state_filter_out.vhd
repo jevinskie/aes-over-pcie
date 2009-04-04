@@ -14,7 +14,7 @@ use ieee.numeric_std.all;
 entity state_filter_out is
    
    port (
-      current_state     : in state;
+      current_state     : in state_type;
       sub_bytes_out     : in byte;
       shift_rows_out    : in row;
       mix_columns_out   : in col;
@@ -22,7 +22,7 @@ entity state_filter_out is
       load_out          : in byte;
       subblock          : in subblock_type;
       i                 : in g_index;
-      next_state        : out state
+      next_state        : out state_type
    );
    
 end entity state_filter_out;
@@ -148,7 +148,7 @@ begin
       for x in index loop
          for y in index loop
             case subblock is
-               when add_key =>
+               when add_round_key =>
                   -- select just the indexed byte
                   if (x * 4 + y = i) then
                      next_state(x, y) <= add_round_key_out;
@@ -215,7 +215,7 @@ begin
                   if (y = i) then
                      next_state(x, y) <= mix_columns_out(x);
                   end if;
-               when add_key =>
+               when add_round_key =>
                   -- select just the index byte
                   if (x * 4 + y = i) then
                      next_state(x, y) <= add_round_key_out;

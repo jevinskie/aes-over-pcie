@@ -15,8 +15,8 @@ entity state is
    
    port (
       clk      : in std_logic;
-      state_q  : in state;
-      state_d  : out state
+      state_d  : in state_type;
+      state_q  : out state_type
    );
    
 end entity state;

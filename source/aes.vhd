@@ -30,9 +30,9 @@ package aes is
    
    subtype round is integer range 0 to 10;
    
-   type state is array (index, index) of byte;
+   type state_type is array (index, index) of byte;
    
-   type key is array (0 to 15) of byte;
+   type key is array (g_index) of byte;
    
    type slice is array (index) of byte;
    alias row is slice;
