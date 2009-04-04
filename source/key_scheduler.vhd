@@ -35,10 +35,10 @@ end key_scheduler;
 
 architecture behavioral of key_scheduler is
     type states is (IDLE, SETUP, SETUP2, SETUP3, SETUP4, SETUP5, COMPUTE,
-                    COMPUTE2, COMPUTE3, COMPUTE4);
+                    COMPUTE2, COMPUTE3, COMPUTE4, SETUP2b, SETUP3b, SETUP4b);
     signal state, nextstate: states;
     signal stored_key, next_stored_key : key;
-    signal int_col : col;
+    signal int_col, test : col;
 
 begin
     
@@ -68,6 +68,7 @@ begin
            when SETUP =>
                 if (iteration = 0) then   --setup round
                     next_stored_key <= encryption_key;  --first round, load in user input key
+                    nextstate <= IDLE;
                 else    --Rjindeal rounds 1 through 10
                  --break stored key into 4 words
                  for i in 0 to 3 loop
@@ -86,27 +87,39 @@ begin
                 end if;
             when SETUP2 =>
                 --first sbox sub should be here
-                rotword(0) := sbox_return;               
+                rotword(0) := sbox_return;
+                nextstate <= SETUP2b;
+            when SETUP2b =>            
                 --sbox sub 1
                 sbox_lookup <= rotword(1);
+                int_col <= rotword;
                 nextstate <= SETUP3;
             when SETUP3 =>
                 rotword(1) :=sbox_return;
+                nextstate <= SETUP3b;
+            when SETUP3b =>
                 sbox_lookup <= rotword(2);
+                int_col <= rotword;
                 nextstate <= SETUP4;
             when SETUP4 =>
                 rotword(2) := sbox_return;
+                nextstate <= SETUP4b;
+            when SETUP4b =>
                 sbox_lookup <= rotword(3);
+                int_col <= rotword;
                 nextstate <= SETUP5;
             when SETUP5 =>
                 rotword(3) := sbox_return;
-                --rotword should now be completely subbed    
+                --rotword should now be completely subbed
+                int_col <= rotword;    
                 rotword(0) := rotword(0) xor rcon(iteration);
+                --int_col <= rotword;
                 nextstate <= COMPUTE;
             when COMPUTE =>
                 for i in 0 to 3 loop
                    word0(i) := word0(i) xor rotword(i);
                 end loop;
+                int_col <= word0;
                 nextstate <= COMPUTE2;
             when COMPUTE2 =>
                 for i in 0 to 3 loop
