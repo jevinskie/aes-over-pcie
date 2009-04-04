@@ -12,3 +12,5 @@ http://en.wikipedia.org/wiki/Rijndael_mix_columns
 http://en.wikipedia.org/wiki/Rijndael_Galois_field
 http://csrc.nist.gov/archive/aes/rijndael/wsdindex.html
 http://www.quadibloc.com/crypto/co040401.htm
+http://islab.oregonstate.edu/koc/ece575/03Project/Megarajan-Park/
+http://www.samiam.org/key-schedule.html

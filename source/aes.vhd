@@ -15,16 +15,28 @@ package aes is
    subtype nibble is unsigned(3 downto 0);
    subtype pair is unsigned(1 downto 0);
    
-   type index is range 0 to 3;
+   subtype index is integer range 0 to 3;
    
    type pntr is record
       i : index;
       j : index;
    end record pntr;
    
-   type blk is array (index, index) of byte;
+   subtype g_index is integer range 0 to 15;
    
-   type key is array (0 to 16) of byte;
+   type subblock_type is
+      (identity, sub_bytes, mix_columns,
+       shift_rows, add_key, load);
+   
+   subtype round is integer range 0 to 10;
+   
+   type state is array (index, index) of byte;
+   
+   type key is array (0 to 15) of byte;
+   
+   type slice is array (index) of byte;
+   alias row is slice;
+   alias col is slice;
    
    type sbox_array is array (0 to 255) of byte;
    constant sbox : sbox_array :=

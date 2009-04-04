@@ -1,46 +1,64 @@
+-- File name:   mix_columns.vhd
+-- Created:     2009-03-29
+-- Author:      Matt Swanson
+-- Lab Section: 337-02
+-- Version:     1.0  Initial Design Entry
+-- Description: Rijndael MixColumns
+
+use work.aes.all;
+
 library ieee;
 use ieee.std_logic_1164.all;
-use IEEE.numeric_std.all;
+use ieee.numeric_std.all;
 
 entity mix_columns is
-    Port(CLK, RST : in std_logic;
-         DATA_IN : in std_logic_vector(31 downto 0);
-         DATA_OUT: out std_logic_vector(31 downto 0));
-end mix_columns;
+   
+   port (
+      d_in  : in col;
+      d_out : out col
+   );
+   
+end entity mix_columns;
 
-architecture arch of mix_columns is
--- Rijndael mix columns matrix
--- [ r0 ]      [ 2   3   1   1 ] [ a0 ] 
--- [ r1 ]  =   [ 1   2   3   1 ] [ a1 ]
--- [ r2 ]      [ 1   1   2   3 ] [ a2 ]
--- [ r3 ]      [ 3   1   1   2 ] [ a3 ]
---
--- Note: addition -> XOR
--- r0 = 2a0 + a3 + a2 + 3a1
--- r1 = 2a1 + a0 + a3 + 3a2
--- r2 = 2a2 + a1 + a0 + 3a3
--- r3 = 2a3 + a2 + a1 + 3a0 
-type arr is array(3 downto 0) of std_logic_vector(7 downto 0);       
-signal a : arr;
-signal b : arr;
-signal r : arr;
 
+architecture behavioral of mix_columns is
+   
 begin
-        a(0) <= DATA_IN(31 downto 24); --db
-        a(1) <= DATA_IN(23 downto 16); --13
-        a(2) <= DATA_IN(15 downto 8);  --53
-        a(3) <= DATA_IN(7 downto 0);   --45
-        
-        b(0) <= std_logic_vector(unsigned(a(0)) sll 1);
-        b(1) <= std_logic_vector(unsigned(a(1)) sll 1);
-        b(2) <= std_logic_vector(unsigned(a(2)) sll 1);
-        b(3) <= std_logic_vector(unsigned(a(3)) sll 1);  
-              
-        r(0) <= b(0) XOR a(3) XOR a(2) XOR b(1) XOR a(1); --8e
-        r(1) <= b(1) XOR a(0) XOR a(3) XOR b(2) XOR a(2); --4d
-        r(2) <= b(2) XOR a(1) XOR a(0) XOR b(3) XOR a(3); --a1 
-        r(3) <= b(3) XOR a(2) XOR a(1) XOR b(0) XOR a(0); --bc
-        
-        DATA_OUT <= r(0) & r(1) & r(2) & r(3);
-        
-end arch;
+   
+   -- Rijndael mix columns matrix
+   -- [ r0 ]  =   [ 2   3   1   1 ] [ a0 ]
+   -- [ r1 ]  =   [ 1   2   3   1 ] [ a1 ]
+   -- [ r2 ]  =   [ 1   1   2   3 ] [ a2 ]
+   -- [ r3 ]  =   [ 3   1   1   2 ] [ a3 ]
+   --
+   -- Note: addition -> XOR
+   -- r0 = 2a0 + a3 + a2 + 3a1
+   -- r1 = 2a1 + a0 + a3 + 3a2
+   -- r2 = 2a2 + a1 + a0 + 3a3
+   -- r3 = 2a3 + a2 + a1 + 3a0
+   
+   
+   process(d_in)
+      variable b : col; --temp calculation variable
+   begin
+      
+      --multiply by 2 is done with a left shift
+      --need Galois field correction for b here; i.e. b(i) must be 8-bits still
+      --Algo: check if upper nibble of d_in(1) = 0x80, if so b(i) = b(i) XOR 0x1b
+
+      for i in index loop
+         b(i) := d_in(i) sll 1;
+         if d_in(i)(7) = '1' then
+            b(i) := (b(i) xor x"1b");
+         end if;
+      end loop;
+      
+      --when multiply by 3 is needed, we can break that into x*(2x)
+      d_out(0) <= b(0) xor d_in(3) xor d_in(2) xor b(1) xor d_in(1);
+      d_out(1) <= b(1) xor d_in(0) xor d_in(3) xor b(2) xor d_in(2);
+      d_out(2) <= b(2) xor d_in(1) xor d_in(0) xor b(3) xor d_in(3);
+      d_out(3) <= b(3) xor d_in(2) xor d_in(1) xor b(0) xor d_in(0);
+   end process;
+   
+end architecture behavioral;
+
