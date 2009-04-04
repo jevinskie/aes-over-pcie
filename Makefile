@@ -9,11 +9,7 @@ ENTITIES =	add_round_key		\
 				aes_rcu				\
 				aes_top				\
 				aes					\
-				bus_test				\
-				cntr					\
-				enc					\
 				key_scheduler		\
-				lfsr					\
 				mix_columns			\
 				reduce_pack			\
 				sbox					\
@@ -25,8 +21,6 @@ ENTITIES =	add_round_key		\
 
 TEST_ENTITIES =	tb_add_round_key	\
 						tb_aes_rcu			\
-						tb_bus_test			\
-						tb_counters			\
 						tb_key_scheduler	\
 						tb_mix_columns		\
 						tb_sbox				\
