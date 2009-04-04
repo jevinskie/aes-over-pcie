@@ -33,7 +33,7 @@ begin
    begin
       -- by default output dont cares
       for j in index loop
-         d_out(j) <= (others => 'X');
+         d_out(j) <= (others => '-');
       end loop;
       
       i_clamped := to_integer(resize(to_unsigned(i, 4), 2));
@@ -55,7 +55,7 @@ begin
             for j in index loop
                d_out(j) <= s(i_clamped, j);
             end loop;
-         when add_key =>
+         when add_round_key =>
             -- output the indexed byte
             d_out(0) <= s(r, c);
          when others =>

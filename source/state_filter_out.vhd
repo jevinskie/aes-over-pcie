@@ -18,7 +18,7 @@ entity state_filter_out is
       sub_bytes_out     : in byte;
       shift_rows_out    : in row;
       mix_columns_out   : in col;
-      add_key_out       : in byte;
+      add_round_key_out : in byte;
       load_out          : in byte;
       subblock          : in subblock_type;
       i                 : in g_index;
@@ -61,7 +61,7 @@ begin
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
-               when add_key =>
+               when add_round_key =>
                   -- dont select the indexed byte
                   if (x * 4 + y /= i) then
                      next_state(x, y) <= current_state(x, y);
@@ -143,7 +143,7 @@ begin
    end process mix_columns_proc;
    
    
-   add_key_proc : process(subblock, i, current_state, add_key_out)
+   add_round_key_proc : process(subblock, i, current_state, add_round_key_out)
    begin
       for x in index loop
          for y in index loop
@@ -151,7 +151,7 @@ begin
                when add_key =>
                   -- select just the indexed byte
                   if (x * 4 + y = i) then
-                     next_state(x, y) <= add_key_out;
+                     next_state(x, y) <= add_round_key_out;
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
@@ -160,7 +160,7 @@ begin
             end case;
          end loop;
       end loop;
-   end process add_key_proc;
+   end process add_round_key_proc;
    
    
    load_proc : process(subblock, i, current_state, load_out)
@@ -192,7 +192,7 @@ architecture mux of state_filter_out is
 begin
    
    process(current_state, sub_bytes_out, shift_rows_out,
-      mix_columns_out, add_key_out, load_out, subblock, i)
+      mix_columns_out, add_round_key_out, load_out, subblock, i)
    begin
       for x in index loop
          for y in index loop
@@ -218,7 +218,7 @@ begin
                when add_key =>
                   -- select just the index byte
                   if (x * 4 + y = i) then
-                     next_state(x, y) <= add_key_out;
+                     next_state(x, y) <= add_round_key_out;
                   end if;
                when load =>
                   -- select just the index byte

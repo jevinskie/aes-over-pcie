@@ -26,7 +26,7 @@ package aes is
    
    type subblock_type is
       (identity, sub_bytes, mix_columns,
-       shift_rows, add_key, load);
+       shift_rows, add_round_key, load);
    
    subtype round is integer range 0 to 10;
    
