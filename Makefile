@@ -20,11 +20,14 @@ ENTITIES =	add_round_key		\
 				shift_rows			\
 				state_filter_in	\
 				state_filter_out	\
-				state
+				state					\
+				top_top
 
 TEST_ENTITIES =	tb_add_round_key	\
+						tb_aes_rcu			\
 						tb_bus_test			\
 						tb_counters			\
+						tb_key_scheduler	\
 						tb_mix_columns		\
 						tb_sbox				\
 						tb_shift_rows
@@ -62,6 +65,7 @@ tb_counters:
 tb_mix_columns: aes
 tb_sbox: aes
 tb_shift_rows: aes
+tb_aes_ruc: aes
 
 work:
 	vlib $(WORKDIR)
