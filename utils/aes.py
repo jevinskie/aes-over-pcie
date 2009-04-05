@@ -1,3 +1,4 @@
+import copy
 
 class aes:
    
@@ -74,17 +75,51 @@ class aes:
           )
    
    
+   def str_to_hex(self, str):
+      assert len(str) == 32
+      
+      nums = [int(str[2*j:2*j+2], 16) for j in range(0, 16)]
+      
+      key = [[None for j in range(0, 4)] for i in range(0, 4)]
+      
+      for i in range(0, 4):
+         for j in range(0, 4):
+            key[j][i] = nums[4*i + j]
+      
+      return key
+   
+   
+   def hex_to_str(self, hex):
+      str = ""
+      for i in range(0, 4):
+         for j in range(0, 4):
+            str += "%02X" % hex[j][i]
+      return str
+   
+   
+   def block_to_str(self, b):
+      str = ""
+      for i in range(0, 4):
+         for j in range(0, 4):
+            str += "%02X " % b[i][j]
+         str += "\n"
+      return str
+   
+   
    def subbytes(self, block):
       return [[self.sbox[b] for b in r] for r in block]
    
    
    def shiftrows(self, block):
+      block = copy.deepcopy(block)
       for i in range(1, 4):
          block[i] = [block[i][c] for c in range(-4+i, i)]
       return block
    
    
    def mixmul(self, r):
+      r = copy.deepcopy(r)
+      
       a = [None, None, None, None]
       b = [None, None, None, None]
       
@@ -104,14 +139,16 @@ class aes:
    
    
    def mixcol(self, block):
+      block = copy.deepcopy(block)
       for i in range(0, 4):
-         r = self.mixmul([c[i] for c in block])
+         r = self.mixmul([block[j][i] for j in range(0, 4)])
          for j in range(0, 4):
-            block[i][j] = r[j]
+            block[j][i] = r[j]
       return block
    
    
    def addroundkey(self, block, roundkey):
+      block = copy.deepcopy(block)
       for i in range(0, 4):
          for j in range(0, 4):
             block[i][j] ^= roundkey[i][j]
@@ -122,7 +159,7 @@ class aes:
       w = [[None for j in range(0, 4)] for i in range(0, 44)]
       
       for i in range(0, 4):
-         w[i] = key[i]
+         w[i] = [key[j][i] for j in range(0, 4)]
       
       for i in range(4, 44):
          temp = w[i-1]
@@ -138,22 +175,25 @@ class aes:
    def keysched(self, key, i):
       w = self.expandkey(key)
       
-      r = [w[i] for i in range(4*i, 4*(i+1))]
+      r = [[None for x in range(0, 4)] for y in range(0, 4)]
+      
+      for x in range(0, 4):
+         for y in range(0, 4):
+            r[y][x] = w[4*i + x][y]
       
       return r
    
    
    def encblock(self, b, key):
-      b = addroundkey(b, key)
-      for i in range(0, 9):
-         b = subbytes(b)
-         b = shiftrows(b)
-         b = mixcol(b)
-         b = addroundkey(b, keysched(key, i))
-      b = subbytes(b)
-      b = shiftrows(b)
-      b = addroundkey(b, keysched(key, 10))
-      
+      b = self.addroundkey(b, self.keysched(key, 0))
+      for i in range(1, 10):
+         b = self.subbytes(b)
+         b = self.shiftrows(b)
+         b = self.mixcol(b)
+         b = self.addroundkey(b, self.keysched(key, i))
+      b = self.subbytes(b)
+      b = self.shiftrows(b)
+      b = self.addroundkey(b, self.keysched(key, 10))
       return b
    
    

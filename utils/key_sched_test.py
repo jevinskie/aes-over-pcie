@@ -5,22 +5,22 @@ import os
 import aes
 
 def readkey(str):
-   nums = [int(i, 16) for i in str.split()]
-   
+   nums = map(lambda i : int(i, 16), str.split())
+
    key = [[None for j in range(0, 4)] for i in range(0, 4)]
    
    for i in range(0, 4):
       for j in range(0, 4):
-         key[i][j] = nums[4*i + j]
+         key[j][i] = nums[4*i + j]
    
    return key
 
 
 def key_to_str(key):
    str = ""
-   for i in key:
-      for j in i:
-         str += "%02x " % j
+   for i in range(0, 4):
+      for j in range(0, 4):
+         str += "%02x " % key[j][i]
    return str
 
 e = aes.aes()
@@ -28,8 +28,8 @@ e = aes.aes()
 overall_ok = True
 
 # iterate over all the key test vectors
-for filename in os.listdir(sys.path[0] + '/key_vectors'):
-   f = open(sys.path[0] + '/key_vectors/' + filename, 'r')
+for filename in os.listdir(os.path.join(sys.path[0], 'key_vectors')):
+   f = open(os.path.join(sys.path[0], 'key_vectors', filename), 'r')
    
    # read in the encryption key
    key = readkey(f.readline())
@@ -46,6 +46,8 @@ for filename in os.listdir(sys.path[0] + '/key_vectors'):
          print "Expected: %s" % key_to_str(gold_key)
          print "Got: %s" % key_to_str(e.keysched(key, i))
          ok = False
+   
+   f.close()
    
    if ok:
       print "%16s => GOOD" % filename
