@@ -46,7 +46,7 @@ begin
     
     state_reg: process(clk)
     begin
-        if (rst = '1') then
+        if (rst = '0') then
             stored_key <= (others => x"00");
             state <= IDLE;
         elsif (rising_edge(clk)) then
@@ -57,7 +57,7 @@ begin
         end if;
     end process state_reg;
         
-    process(sbox_return,iteration,store,encryption_key,state)
+    process(sbox_return,iteration,store,encryption_key,state, go)
         variable word0, word1, word2, word3, rotword : col;
     begin
        store <= '0';
@@ -72,7 +72,7 @@ begin
            when SETUP =>
                 if (iteration = 0) then   --setup round
                     next_stored_key <= encryption_key;  --first round, load in user input key
-                    nextstate <= IDLE;
+                    nextstate <= STOREKEY;
                 else    --Rjindeal rounds 1 through 10
                  --break stored key into 4 words
                  for i in 0 to 3 loop
@@ -154,6 +154,6 @@ begin
             end case;    
     
     end process;
-    
+    done <= '1' when (state = STOREKEY) else '0';
     round_key <= stored_key;
 end behavioral;
