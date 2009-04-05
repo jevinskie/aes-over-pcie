@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 iso      = ((1,0,1,0,0,0,0,0),
             (1,1,0,1,1,1,1,0),

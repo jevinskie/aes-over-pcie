@@ -14,3 +14,5 @@ http://csrc.nist.gov/archive/aes/rijndael/wsdindex.html
 http://www.quadibloc.com/crypto/co040401.htm
 http://islab.oregonstate.edu/koc/ece575/03Project/Megarajan-Park/
 http://www.samiam.org/key-schedule.html
+http://www.cs.bc.edu/~straubin/cs381-05/blockciphers/rijndael_ingles2004.swf
+

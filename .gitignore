@@ -18,3 +18,4 @@ transcript
 vsim.wlf
 leda-libs/
 leda-logs/
+.leda_work/

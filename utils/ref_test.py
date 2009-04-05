@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import rijndael as aes
 
 def hex2bin(s):
