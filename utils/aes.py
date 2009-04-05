@@ -1,5 +1,7 @@
 
 class aes:
+   
+   
    sbox = (
             0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
             0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -34,6 +36,7 @@ class aes:
             0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68,
             0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
           )
+   
    
    rcon = (
             0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40,
@@ -70,13 +73,16 @@ class aes:
             0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb
           )
    
+   
    def subbytes(self, block):
       return [[self.sbox[b] for b in r] for r in block]
+   
    
    def shiftrows(self, block):
       for i in range(1, 4):
          block[i] = [block[i][c] for c in range(-4+i, i)]
       return block
+   
    
    def mixmul(self, r):
       a = [None, None, None, None]
@@ -96,6 +102,7 @@ class aes:
       
       return r
    
+   
    def mixcol(self, block):
       for i in range(0, 4):
          r = self.mixmul([c[i] for c in block])
@@ -103,16 +110,38 @@ class aes:
             block[i][j] = r[j]
       return block
    
+   
    def addroundkey(self, block, roundkey):
       for i in range(0, 4):
          for j in range(0, 4):
             block[i][j] ^= roundkey[i][j]
       return block
    
+   
    def expandkey(self, key):
       w = [[None for j in range(0, 4)] for i in range(0, 44)]
       
-         
+      for i in range(0, 4):
+         w[i] = key[i]
+      
+      for i in range(4, 44):
+         temp = w[i-1]
+         if (0 == i % 4):
+            temp = [temp[(j+1) % 4] for j in range(0, 4)]
+            temp = [self.sbox[temp[j]] for j in range(0, 4)]
+            temp[0] ^= self.rcon[i / 4]
+         w[i] = [w[i-4][j] ^ temp[j] for j in range(0, 4)]
+      
+      return w
+   
+   
+   def keysched(self, key, i):
+      w = self.expandkey(key)
+      
+      r = [w[i] for i in range(4*i, 4*(i+1))]
+      
+      return r
+   
    
    def encblock(self, b, key):
       b = addroundkey(b, key)
@@ -126,4 +155,5 @@ class aes:
       b = addroundkey(b, keysched(key, 10))
       
       return b
+   
    
