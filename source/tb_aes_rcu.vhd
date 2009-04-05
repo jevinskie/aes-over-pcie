@@ -24,20 +24,42 @@ architecture TEST of tb_aes_rcu is
   signal nrst     : std_logic;
   signal p        : g_index;
   signal subblock : subblock_type;
-  
-   -- clock only runs when stop isnt asserted
+  signal encryption_key : key;
   signal stop             : std_logic := '1';
-
--- signal <name> : <type>;
+  signal sbox_lookup, sbox_return : byte;
+  signal round_key : key;
+  signal start_key : std_logic;
+  signal key_done : std_logic;
+  signal go : std_logic;
+  signal done: std_logic;
+  signal current_round: round;
 
 begin
   behavioral: entity work.aes_rcu (behavioral) port map(
               clk => clk,
               nrst => nrst,
               p => p,
-              subblock => subblock
+              subblock => subblock,
+              start_key => start_key,
+              key_done => done,
+              current_round => current_round
               );
-
+              
+  keysched: entity work.key_scheduler(behavioral) port map(
+             clk => clk,
+             rst => nrst,
+             sbox_lookup=>sbox_lookup,
+             sbox_return=>sbox_return,
+             iteration => current_round,
+             encryption_key => encryption_key,
+             round_key => round_key,
+             go => start_key,
+             done => done
+             );    
+                       
+  data : entity work.sbox(dataflow) port map (
+     clk => clk, a => sbox_lookup, b => sbox_return
+     );
 --   GOLD: <GOLD_NAME> port map(<put mappings here>);
 
 -- clock when stop isnt asserted
@@ -47,7 +69,9 @@ process
 
   begin
     
-      
+   encryption_key <= (x"00", x"00", x"00", x"00", x"00", x"00",
+                       x"00", x"00", x"00", x"00", x"00", x"00",
+                       x"00", x"00", x"00", x"00");   
    -- start the clock
    stop <= '0';
    nrst <= '0';
@@ -55,7 +79,7 @@ process
    nrst <= '1';
    wait for clk_per*2;
    
-   wait for clk_per*100;
+   wait for clk_per*3000;
 
     
                        
