@@ -54,12 +54,10 @@ state_filter_out: aes
 state: aes
 
 tb_add_round_key: aes
-tb_bus_test:
-tb_counters:
 tb_mix_columns: aes
 tb_sbox: aes
 tb_shift_rows: aes
-tb_aes_ruc: aes
+tb_aes_rcu: aes
 
 work:
 	vlib $(WORKDIR)

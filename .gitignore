@@ -16,3 +16,5 @@ analyzed/
 default.svf
 transcript
 vsim.wlf
+leda-libs/
+leda-logs/
