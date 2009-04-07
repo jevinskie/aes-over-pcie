@@ -2,6 +2,8 @@ SRCDIR = source
 MAPPEDDIR = mapped
 WORKDIR = work
 SCRIPTDIR = scripts
+TESTVECTDIR = test_vectors
+UTILSDIR = utils
 
 CFLAGS = -quiet
 
@@ -28,11 +30,13 @@ TEST_ENTITIES =	aes_textio           \
 						tb_sbox				   \
 						tb_shift_rows
 
+TEST_VECTORS =    tb_key_scheduler
 
 ENTITY_DIRS = $(foreach ent,$(ENTITIES),$(WORKDIR)/$(ent))
 TEST_ENTITY_DIRS = $(foreach test,$(TEST_ENTITIES),$(WORKDIR)/$(test))
 ENTITY_SRCS = $(foreach ent,$(ENTITIES),$(SRCDIR)/$(ent).vhd)
 TEST_ENTITY_SRCS = $(foreach test,$(TEST_ENTITES),$(SRCDIR)/$(test).vhd)
+TEST_VECTOR_DATS = $(foreach vect,$(TEST_VECTORS),$(TESTVECTDIR)/$(vect).dat)
 
 .PHONEY : clean_source clean_mapped all_source $(ENTITIES) $(TEST_ENTITIES)
 
@@ -41,6 +45,9 @@ clean_source:
 	
 clean_mapped:
 	@echo fill me in
+
+clean_test_vectors:
+	rm -f $(TEST_VECTOR_DATS)
 
 add_round_key: aes
 aes_rcu: aes
@@ -66,6 +73,9 @@ aes_textio: aes numeric_std_textio
 work:
 	vlib $(WORKDIR)
 
+$(TEST_VECTOR_DATS): $(TESTVECTDIR)/%.dat : $(TESTVECTDIR)/%.py
+	PYTHONPATH=$(UTILSDIR) $< > $@
+
 $(ENTITIES) : % : $(WORKDIR)/%
 $(TEST_ENTITIES) : % : $(WORKDIR)/%
 
@@ -74,5 +84,7 @@ $(WORKDIR)/%: work
 
 all_source: $(ENTITIES)
 
-all_test: $(TEST_ENTITIES)
+all_tests: $(TEST_ENTITIES)
+
+all_test_vectors: $(TEST_VECTOR_DATS)
 
