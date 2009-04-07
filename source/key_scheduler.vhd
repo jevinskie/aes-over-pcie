@@ -14,7 +14,7 @@ use ieee.numeric_std.all;
 entity key_scheduler is
     port (
           clk: in std_logic;
-          rst: in std_logic;
+          nrst: in std_logic;
           sbox_lookup: out byte;
           sbox_return: in byte;
           iteration: in round;
@@ -44,10 +44,11 @@ architecture behavioral of key_scheduler is
 
 begin
     
-    state_reg: process(clk)
+
+    -- leda C_1406 off
+    state_reg: process(clk, nrst)
     begin
-        if (rst = '0') then
-            stored_key <= (others => x"00");
+        if (nrst = '0') then
             state <= IDLE;
         elsif (rising_edge(clk)) then
             state <= nextstate;
@@ -56,7 +57,8 @@ begin
             end if;
         end if;
     end process state_reg;
-        
+   -- leda C_1406 on
+
     process(sbox_return,iteration,store,encryption_key,state, go)
         variable word0, word1, word2, word3, rotword : col;
     begin

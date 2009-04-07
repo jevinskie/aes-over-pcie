@@ -1,0 +1,2 @@
+#!/bin/csh -f
+dc_shell-t -f ./scripts/top_top.fcr | tee top_top.log

@@ -266,6 +266,12 @@ architecture dataflow of sbox is
    
 begin
    
+   process(clk)
+   begin
+      if rising_edge(clk) then
+      end if;
+   end process;
+   
    iso   <= iso_map(a);
    isoh  <= iso(7 downto 4);
    isol  <= iso(3 downto 0);
@@ -296,7 +302,7 @@ architecture pipelined of sbox is
    
 begin
    
-   reg : process(clk)
+   process(clk)
    begin
       if (rising_edge(clk)) then
          isoh_q <= isoh;
@@ -305,7 +311,7 @@ begin
          left_bot_q <= left_bot;
          b <= subbyte;
       end if;
-   end process reg;
+   end process;
    
    iso   <= iso_map(a);
    isoh  <= iso(7 downto 4);
@@ -326,6 +332,13 @@ end architecture pipelined;
 
 architecture lut of sbox is
 begin
+   
+   process(clk)
+   begin
+      if rising_edge(clk) then
+      end if;
+   end process;
+   
    b <= work.aes.sbox(to_integer(a));
 end architecture lut;
 

@@ -1,0 +1,2 @@
+#!/bin/csh -f
+dc_shell-t -f ./scripts/key_scheduler.fcr | tee key_scheduler.log

@@ -1,13 +1,13 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {sbox.vhd aes.vhd reduce_pack.vhd}
-elaborate sbox -arch "dataflow" -lib WORK -update
+analyze -format vhdl -lib WORK {state.vhd aes.vhd}
+elaborate state -arch "dataflow" -lib WORK -update
 
 # Step 2: Set design constraints
 # Uncomment below to set timing, area, power, etc. constraints
 # set_max_delay <delay> -from "<input>" -to "<output>"
 # set_max_area <area>
 # set_max_total_power <power> mW
-create_clock -name pseudo -period 4
+create_clock clk -name clk -period 4
 set_input_delay 0 -clock pseudo [all_inputs]
 set_output_delay 0 -clock pseudo [all_outputs]
 

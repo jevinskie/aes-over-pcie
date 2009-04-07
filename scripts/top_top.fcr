@@ -1,23 +1,28 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {sbox.vhd aes.vhd reduce_pack.vhd}
-elaborate sbox -arch "dataflow" -lib WORK -update
+analyze -format vhdl -lib WORK {aes_top.vhd sbox.vhd top_top.vhd aes.vhd reduce_pack.vhd mix_columns.vhd state_filter_in.vhd state_filter_out.vhd shift_rows.vhd key_scheduler.vhd aes_rcu.vhd add_round_key.vhd state.vhd}
+elaborate top_top -arch "structural" -lib WORK -update
 
 # Step 2: Set design constraints
 # Uncomment below to set timing, area, power, etc. constraints
 # set_max_delay <delay> -from "<input>" -to "<output>"
 # set_max_area <area>
 # set_max_total_power <power> mW
-create_clock -name pseudo -period 4
-set_input_delay 0 -clock pseudo [all_inputs]
-set_output_delay 0 -clock pseudo [all_outputs]
+create_clock clk -name clk -period 4
+
+#current_design .
+
+#ungroup -flatten -all
+#set_flatten true -effort high
+#uniquify
 
 # Step 3: Compile the design
 compile -map_effort medium
+#compile_ultra
 
 # Step 4: Output reports
 current_design .
 report_timing -path full -delay max -max_paths 1 -nworst 1 > reports/$current_design.rep
-report_area >> reports/$current_design.rep
+report_area -hierarchy >> reports/$current_design.rep
 report_power -hier >> reports/$current_design.rep
 
 # Step 5: Output final VHDL and Verilog files

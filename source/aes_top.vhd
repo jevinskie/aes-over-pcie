@@ -25,9 +25,10 @@ architecture structural of aes_top is
    
    signal state_d, state_q    : state_type;
    signal subblock            : subblock_type;
-   signal i                   : index;
+   signal i                   : g_index;
    signal num_shifts          : index;
    signal filtered            : slice;
+   signal round_num           : round;
 	signal round_key				: key;
 	signal enc_key					: key;
    signal sub_bytes_out       : byte;
@@ -36,6 +37,9 @@ architecture structural of aes_top is
    signal add_round_key_out   : byte;
    signal load_out            : byte;
    signal filtered_key        : byte;
+   signal start_key           : std_logic;
+   signal key_done            : std_logic;
+   signal sbox_lookup         : byte;
    
 begin
    
@@ -45,15 +49,15 @@ begin
    );
    
    state_filter_in_b : entity work.state_filter_in(behavioral) port map (
-      s => state_d, subblock => subblock, i => i, d_out => filtered,
+      s => state_q, subblock => subblock, i => i, d_out => filtered,
       filtered_key => filtered_key, round_key => round_key
    );
    
    state_filter_out_b : entity work.state_filter_out(mux) port map (
-      current_state => state_d, sub_bytes_out => sub_bytes_out,
+      current_state => state_q, sub_bytes_out => sub_bytes_out,
       shift_rows_out => shift_rows_out, mix_columns_out => mix_columns_out,
       add_round_key_out => add_round_key_out, load_out => load_out,
-      subblock => subblock, i => i, next_state => state_q
+      subblock => subblock, i => i, next_state => state_d
 	);
    
    sub_bytes_b : entity work.sbox(dataflow) port map (
@@ -74,7 +78,18 @@ begin
       data_out => add_round_key_out
    );
    
+   aes_rcu_b : entity work.aes_rcu(Behavioral) port map (
+      clk => clk, nrst => nrst, p => i, subblock => subblock,
+      current_round => round_num, start_key => start_key,
+      key_done => key_done
+   );
    
+   key_scheduler_b : entity work.key_scheduler(behavioral) port map (
+      clk => clk, nrst => nrst, sbox_lookup => sbox_lookup,
+      sbox_return => sub_bytes_out, iteration => round_num,
+      encryption_key => enc_key, round_key => round_key,
+      go => start_key, done => key_done
+   );
    
 end architecture structural;
 

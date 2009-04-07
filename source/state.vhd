@@ -5,6 +5,7 @@
 -- Version:     1.0  Initial Design Entry
 -- Description: AES state register block
 
+
 use work.aes.all;
 
 library ieee;
@@ -26,12 +27,14 @@ architecture dataflow of state is
    
 begin
    
-   reg : process(clk)
+   -- leda C_1406 off
+   process(clk)
    begin
       if rising_edge(clk) then
          state_q <= state_d;
       end if;
-   end process reg;
+   end process;
+   -- leda C_1406 on
    
 end architecture dataflow;
 

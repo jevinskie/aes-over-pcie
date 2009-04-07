@@ -47,7 +47,7 @@ begin
               
   keysched: entity work.key_scheduler(behavioral) port map(
              clk => clk,
-             rst => nrst,
+             nrst => nrst,
              sbox_lookup=>sbox_lookup,
              sbox_return=>sbox_return,
              iteration => current_round,
