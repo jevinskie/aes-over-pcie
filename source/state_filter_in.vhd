@@ -16,7 +16,7 @@ entity state_filter_in is
    port (
       s              : in state_type;
       subblock       : in subblock_type;
-      round_key      : in key;
+      round_key      : in key_type;
       i              : in g_index;
       d_out          : out slice;
       filtered_key   : out byte
@@ -62,7 +62,7 @@ begin
          when add_round_key =>
             -- output the indexed byte
             d_out(0) <= s(r, c);
-            filtered_key <= round_key(r*4 + c);
+            filtered_key <= round_key(r, c);
          when others =>
             -- dont care - already done at the top
       end case;

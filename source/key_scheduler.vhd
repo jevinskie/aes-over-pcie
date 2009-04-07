@@ -5,157 +5,206 @@
 -- Version:     1.0  Initial Design Entry
 -- Description: Rijndael KeyScheduler
 
+
 use work.aes.all;
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+
 entity key_scheduler is
-    port (
-          clk: in std_logic;
-          nrst: in std_logic;
-          sbox_lookup: out byte;
-          sbox_return: in byte;
-          iteration: in round;
-          encryption_key: in key;
-          round_key: out key;
-          go : in std_logic; 
-          done : out std_logic     
-          );
+   
+   
+   port (
+      clk            : in std_logic;
+      nrst           : in std_logic;
+      go             : in std_logic;
+      round          : in round_type;
+      encryption_key : in key_type;
+      sbox_return    : in byte;
+      sbox_lookup    : out byte;
+      round_key      : out key_type; 
+      done           : out std_logic     
+   );
+   
    
    type rcon_array is array (0 to 10) of byte;     
-   constant rcon : rcon_array :=
+   constant rcon_tbl : rcon_array :=
       (
-        x"8d", x"01", x"02", x"04", x"08", x"10", x"20", x"40", 
-        x"80", x"1b", x"36"
+         x"8d", x"01", x"02", x"04", x"08", x"10", x"20", x"40", 
+         x"80", x"1b", x"36"
       );
-       
+   
+   
 end key_scheduler;
 
+
 architecture behavioral of key_scheduler is
-    type states is (IDLE, SETUP, SETUP2, SETUP3, SETUP4, SETUP5, COMPUTE,
-                    COMPUTE2, COMPUTE3, COMPUTE4, SETUP2b, SETUP3b, SETUP4b,
-                    STOREKEY);
-    signal state, nextstate: states;
-    signal stored_key, next_stored_key : key;
-    signal int_col, test : col;
-    signal store: std_logic;
-
+   
+   
+   type state_type is (
+      idle, load_key, rotate, sub_bytes, add_cols, rcon, check_done, be_done
+   );
+   
+   
+   signal state            : state_type;
+   signal next_state       : state_type;
+   signal cur_key          : key_type;
+   signal next_cur_key     : key_type;
+   signal new_key          : key_type;
+   signal next_new_key     : key_type;
+   signal c                : index;
+   signal next_c           : index;
+   signal c_clr            : std_logic;
+   signal c_up             : std_logic;
+   signal r                : index;
+   signal next_r           : index;
+   signal r_clr            : std_logic;
+   signal sbox_return_reged : byte;
+   
+   
 begin
-    
-
-    -- leda C_1406 off
-    state_reg: process(clk, nrst)
-    begin
-        if (nrst = '0') then
-            state <= IDLE;
-        elsif (rising_edge(clk)) then
-            state <= nextstate;
-            if (store = '1') then
-                stored_key <= next_stored_key;
+   
+   
+   -- leda C_1406 off
+   state_reg : process(clk, nrst)
+   begin
+      if (nrst = '0') then
+         state <= idle;
+      elsif rising_edge(clk) then
+         state <= next_state;
+         cur_key <= next_cur_key;
+         new_key <= next_new_key;
+      end if;
+   end process state_reg;
+   -- leda C_1406 on
+   
+   state_nsl : process(state, go, r, c, round)
+   begin
+      next_state <= idle;
+      case state is
+         when idle =>
+            if (go = '1' and round = 0) then
+               next_state <= load_key;
+            elsif (go = '1') then
+               next_state <= rotate;
+            else
+               next_state <= idle;
             end if;
-        end if;
-    end process state_reg;
+         when load_key =>
+            next_state <= be_done;
+         when rotate =>
+            next_state <= sub_bytes;
+         when sub_bytes =>
+            if (r /= 3) then
+               next_state <= sub_bytes;
+            else
+               next_state <= add_cols;
+            end if;
+         when add_cols =>
+            if (r /= 3) then
+               next_state <= add_cols;
+            else
+               next_state <= rcon;
+            end if;
+         when rcon =>
+            next_state <= check_done;
+         when check_done =>
+            if (c /= 3) then
+               next_state <= rotate;
+            else
+               next_state <= be_done;
+            end if;
+         when be_done =>
+            next_state <= idle;
+      end case;
+   end process state_nsl;
+   
+   state_out : process(state, cur_key, new_key, encryption_key,
+      sbox_return_reged, c, r, round)
+   begin
+      next_cur_key <= cur_key;
+      next_new_key <= new_key;
+      c_up <= '0';
+      c_clr <= '0';
+      r_clr <= '0';
+      done <= '0';
+      sbox_lookup <= new_key(3, c);
+      case state is
+         when idle =>
+            -- nothing
+         when load_key =>
+            next_new_key <= encryption_key;
+            c_clr <= '1';
+         when rotate =>
+            r_clr <= '1';
+            for i in index loop
+               next_new_key(i, c) <= new_key(to_integer(to_unsigned(i, 2)+1), c);
+            end loop;
+         when sub_bytes =>
+            sbox_lookup <= new_key(to_integer(to_unsigned(r, 2) + 1), c);
+            next_new_key(r, c) <= sbox_return_reged;
+         when add_cols =>
+            next_new_key(r, c) <= new_key(r, c) xor cur_key(r, c);
+         when rcon =>
+            next_new_key(0, c) <= new_key(0, c) xor rcon_tbl(round);
+         when check_done =>
+            c_up <= '1';
+         when be_done =>
+            next_cur_key <= new_key;
+            done <= '1';
+      end case;
+   end process state_out;
+   
+   -- leda C_1406 off
+   c_counter_reg : process(clk)
+   begin
+      if rising_edge(clk) then
+         c <= next_c;
+      end if;
+   end process c_counter_reg;
+   -- leda C_1406 on
+   
+   c_counter_nsl : process(c, c_up, c_clr)
+   begin
+      if (c_clr = '1') then
+         next_c <= 0;
+      elsif (c_up = '1') then
+         next_c <= to_integer(to_unsigned(c, 2) + 1);
+      else
+         next_c <= c;
+      end if;
+   end process c_counter_nsl;
+   
+   -- leda C_1406 off
+   r_counter_reg : process(clk)
+   begin
+      if rising_edge(clk) then
+         r <= next_r;
+      end if;
+   end process r_counter_reg;
+   -- leda C_1406 on
+   
+   -- leda C_1406 off
+   sbox_return_reg : process(clk)
+   begin
+      if rising_edge(clk) then
+         sbox_return_reged <= sbox_return;
+      end if;
+   end process sbox_return_reg;
    -- leda C_1406 on
 
-    process(sbox_return,iteration,store,encryption_key,state, go)
-        variable word0, word1, word2, word3, rotword : col;
-    begin
-       store <= '0';
-       done <= '0';
-       case state is
-           when IDLE =>
-                if (go = '1') then
-                    nextstate <= SETUP;
-                else
-                    nextstate <= IDLE;
-                end if;
-           when SETUP =>
-                if (iteration = 0) then   --setup round
-                    next_stored_key <= encryption_key;  --first round, load in user input key
-                    nextstate <= STOREKEY;
-                else    --Rjindeal rounds 1 through 10
-                 --break stored key into 4 words
-                 for i in 0 to 3 loop
-                    word0(i) := stored_key(i);
-                    word1(i) := stored_key(i+4);
-                    word2(i) := stored_key(i+8);
-                    word3(i) := stored_key(i+12);
-                 end loop;
-                 for j in 0 to 3 loop
-                    rotword(j) := word3((j+1) mod 4); --generated rotated word
-                 end loop;
-                 
-                 --sbox sub 0
-                 sbox_lookup <= rotword(0);
-                 nextstate <= SETUP2;
-                end if;
-            when SETUP2 =>
-                --first sbox sub should be here
-                rotword(0) := sbox_return;
-                nextstate <= SETUP2b;
-            when SETUP2b =>            
-                --sbox sub 1
-                sbox_lookup <= rotword(1);
-                int_col <= rotword;
-                nextstate <= SETUP3;
-            when SETUP3 =>
-                rotword(1) :=sbox_return;
-                nextstate <= SETUP3b;
-            when SETUP3b =>
-                sbox_lookup <= rotword(2);
-                int_col <= rotword;
-                nextstate <= SETUP4;
-            when SETUP4 =>
-                rotword(2) := sbox_return;
-                nextstate <= SETUP4b;
-            when SETUP4b =>
-                sbox_lookup <= rotword(3);
-                int_col <= rotword;
-                nextstate <= SETUP5;
-            when SETUP5 =>
-                rotword(3) := sbox_return;
-                --rotword should now be completely subbed
-                int_col <= rotword;    
-                rotword(0) := rotword(0) xor rcon(iteration);
-                --int_col <= rotword;
-                nextstate <= COMPUTE;
-            when COMPUTE =>
-                for i in 0 to 3 loop
-                   word0(i) := word0(i) xor rotword(i);
-                end loop;
-                int_col <= word0;
-                nextstate <= COMPUTE2;
-            when COMPUTE2 =>
-                for i in 0 to 3 loop
-                   word1(i) := word1(i) xor word0(i);
-               end loop;
-                nextstate <= COMPUTE3;
-            when COMPUTE3 =>
-                for i in 0 to 3 loop
-                   word2(i) := word2(i) xor word1(i);
-            end loop;
-                nextstate <= COMPUTE4;
-            when COMPUTE4 =>
-               for i in 0 to 3 loop
-                   word3(i) := word3(i) xor word2(i);
-            end loop;
-                --combine chunks back togethers
-                 for i in 0 to 3 loop
-                    next_stored_key(i) <= word0(i);
-                    next_stored_key(i+4) <= word1(i);
-                    next_stored_key(i+8) <= word2(i);
-                    next_stored_key(i+12) <= word3(i);
-                 end loop;
-                 nextstate <= STOREKEY;
-            when STOREKEY =>
-                  store <= '1';   
-                  done <= '1';
-                  nextstate <= IDLE;       
-            end case;    
-    
-    end process;
-    done <= '1' when (state = STOREKEY) else '0';
-    round_key <= stored_key;
+   
+   r_counter_nsl : process(r, r_clr)
+   begin
+      if (r_clr = '1') then
+         next_r <= 0;
+      else
+         next_r <= to_integer(to_unsigned(r, 2) + 1);
+      end if;
+   end process r_counter_nsl;
+   
+   round_key <= cur_key;
+   
 end behavioral;

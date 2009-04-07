@@ -24,15 +24,15 @@ architecture TEST of tb_aes_rcu is
   signal nrst     : std_logic;
   signal p        : g_index;
   signal subblock : subblock_type;
-  signal encryption_key : key;
+  signal encryption_key : key_type;
   signal stop             : std_logic := '1';
   signal sbox_lookup, sbox_return : byte;
-  signal round_key : key;
+  signal round_key : key_type;
   signal start_key : std_logic;
   signal key_done : std_logic;
   signal go : std_logic;
   signal done: std_logic;
-  signal current_round: round;
+  signal current_round: round_type;
 
 begin
   behavioral: entity work.aes_rcu (behavioral) port map(
@@ -50,7 +50,7 @@ begin
              nrst => nrst,
              sbox_lookup=>sbox_lookup,
              sbox_return=>sbox_return,
-             iteration => current_round,
+             round => current_round,
              encryption_key => encryption_key,
              round_key => round_key,
              go => start_key,
@@ -69,9 +69,9 @@ process
 
   begin
     
-   encryption_key <= (x"00", x"00", x"00", x"00", x"00", x"00",
-                       x"00", x"00", x"00", x"00", x"00", x"00",
-                       x"00", x"00", x"00", x"00");   
+   encryption_key <= ((x"00", x"00", x"00", x"00"), (x"00", x"00",
+                       x"00", x"00"), (x"00", x"00", x"00", x"00"),
+                       (x"00", x"00", x"00", x"00"));   
    -- start the clock
    stop <= '0';
    nrst <= '0';

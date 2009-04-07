@@ -18,7 +18,7 @@ entity aes_rcu is
       nrst     : in std_logic;
       p        : out g_index;
       subblock : out subblock_type;
-      current_round    : out round;
+      current_round    : out round_type;
       start_key: out std_logic;
       key_done : in std_logic
    );
@@ -29,7 +29,7 @@ end entity aes_rcu;
 architecture Behavioral of aes_rcu is
    type state_type is (IDLE, KEYSCH, ADDRNDKY, SUBBY, SHFTRWS, MXCOLS);
    signal state, nextstate: state_type;
-   signal roundcount, nextroundcount: round;
+   signal roundcount, nextroundcount: round_type;
    signal blockcount, nextblockcount: b_index;
    
 Begin

@@ -28,9 +28,9 @@ architecture structural of aes_top is
    signal i                   : g_index;
    signal num_shifts          : index;
    signal filtered            : slice;
-   signal round_num           : round;
-	signal round_key				: key;
-	signal enc_key					: key;
+   signal round_num           : round_type;
+	signal round_key				: key_type;
+	signal enc_key					: key_type;
    signal sub_bytes_out       : byte;
    signal shift_rows_out      : row;
    signal mix_columns_out     : col;
@@ -86,7 +86,7 @@ begin
    
    key_scheduler_b : entity work.key_scheduler(behavioral) port map (
       clk => clk, nrst => nrst, sbox_lookup => sbox_lookup,
-      sbox_return => sub_bytes_out, iteration => round_num,
+      sbox_return => sub_bytes_out, round => round_num,
       encryption_key => enc_key, round_key => round_key,
       go => start_key, done => key_done
    );

@@ -16,10 +16,10 @@ use work.numeric_std_textio.all;
 use work.aes.all;
 
 package aes_textio  is
-   procedure read(l : inout line; value : out key);
-   procedure read(l : inout line; value : out key; good : out boolean);
-   procedure hread(l : inout line; value : out key);
-   procedure hread(l : inout line; value : out key; good : out boolean);
+   procedure read(l : inout line; value : out key_type);
+   procedure read(l : inout line; value : out key_type; good : out boolean);
+   procedure hread(l : inout line; value : out key_type);
+   procedure hread(l : inout line; value : out key_type; good : out boolean);
 end package aes_textio;
 
 
@@ -35,7 +35,7 @@ use work.numeric_std_textio.all;
 package body aes_textio is
    
    
-   procedure read(l : inout line; value : out key) is
+   procedure read(l : inout line; value : out key_type) is
       variable good : boolean;
    begin
       read(l, value, good);
@@ -45,20 +45,20 @@ package body aes_textio is
    end procedure read;
    
    
-   procedure read(l : inout line; value : out key; good : out boolean) is
+   procedure read(l : inout line; value : out key_type; good : out boolean) is
       variable good_overall   : boolean;
       variable good_temp      : boolean;
    begin
       good_overall := true;
       for i in g_index loop
-         read(l, value(i), good_temp);
+         read(l, value(i mod 4, i / 4), good_temp);
          good_overall := good_overall and good_temp;
       end loop;
       good := good_overall;
    end procedure read;
    
    
-   procedure hread(l : inout line; value : out key) is
+   procedure hread(l : inout line; value : out key_type) is
       variable good : boolean;
    begin
       hread(l, value, good);
@@ -68,13 +68,13 @@ package body aes_textio is
    end procedure hread;
    
    
-   procedure hread(l : inout line; value : out key; good : out boolean) is
+   procedure hread(l : inout line; value : out key_type; good : out boolean) is
       variable good_overall   : boolean;
       variable good_temp      : boolean;
    begin
       good_overall := true;
       for i in g_index loop
-         hread(l, value(i), good_temp);
+         hread(l, value(i mod 4, i / 4), good_temp);
          good_overall := good_overall and good_temp;
       end loop;
       good := good_overall;

@@ -32,9 +32,9 @@ architecture test of tb_key_scheduler is
    signal nrst             : std_logic := '1';
    signal sbox_lookup      : byte;
    signal sbox_return      : byte;
-   signal iteration        : round;
-   signal encryption_key   : key;
-   signal round_key        : key;
+   signal round            : round_type;
+   signal encryption_key   : key_type;
+   signal round_key        : key_type;
    signal go               : std_logic := '0';
    signal done             : std_logic;
    -- clock only runs when stop isnt asserted
@@ -46,7 +46,7 @@ begin
    
    dut : entity work.key_scheduler(behavioral) port map (
       clk => clk, nrst => nrst, sbox_lookup => sbox_lookup,
-      sbox_return => sbox_return, iteration => iteration,
+      sbox_return => sbox_return, round => round,
       encryption_key => encryption_key, round_key => round_key,
       go => go, done => done
    );
@@ -65,8 +65,8 @@ process
    
    file data : text open read_mode is "test_vectors/tb_key_scheduler.dat";
    variable sample               : line;
-   variable gold_encryption_key  : key;
-   variable gold_round_key       : key;
+   variable gold_encryption_key  : key_type;
+   variable gold_round_key       : key_type;
    
    
 begin
@@ -77,13 +77,14 @@ begin
    nrst <= '1';
    wait for clk_per;
    
+   -- leda DCVHDL_165 off
    while not endfile(data) loop
       readline(data, sample);
       hread(sample, gold_encryption_key);
       encryption_key <= gold_encryption_key;
       for i in 0 to 10 loop
          go <= '1';
-         iteration <= i;
+         round <= i;
          wait for clk_per;
          go <= '0';
          wait until done = '1';
@@ -92,6 +93,7 @@ begin
          assert gold_round_key = round_key;
       end loop;
    end loop;
+   -- leda DCVHDL_165 on
    
    stop <= '1';
    
