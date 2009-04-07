@@ -27,34 +27,73 @@ end entity tb_key_scheduler;
 
 architecture test of tb_key_scheduler is
    
-   signal d1, d2 : byte;
-   signal k1, k2 : key;
+   
+   signal clk              : std_logic := '0';
+   signal nrst             : std_logic := '1';
+   signal sbox_lookup      : byte;
+   signal sbox_return      : byte;
+   signal iteration        : round;
+   signal encryption_key   : key;
+   signal round_key        : key;
+   signal go               : std_logic := '0';
+   signal done             : std_logic;
+   -- clock only runs when stop isnt asserted
+   signal stop             : std_logic := '1';
+   
    
 begin
+   
+   
+   dut : entity work.key_scheduler(behavioral) port map (
+      clk => clk, nrst => nrst, sbox_lookup => sbox_lookup,
+      sbox_return => sbox_return, iteration => iteration,
+      encryption_key => encryption_key, round_key => round_key,
+      go => go, done => done
+   );
+   
+   
+   sbox : entity work.sbox(dataflow) port map (
+      clk => clk, a => sbox_lookup, b => sbox_return
+   );
+   
+   
+   clk <= not clk and not stop after clk_per/2;
    
    
 process
+   
+   
    file data : text open read_mode is "test_vectors/tb_key_scheduler.dat";
-   variable sample : line;
-   variable b1, b2 : byte;
-   variable key1, key2 : key;
+   variable sample               : line;
+   variable gold_encryption_key  : key;
+   variable gold_round_key       : key;
+   
+   
 begin
+   
+   stop <= '0';
+   nrst <= '0';
+   wait for clk_per;
+   nrst <= '1';
+   wait for clk_per;
    
    while not endfile(data) loop
       readline(data, sample);
-      hread(sample, b1);
-      hread(sample, b2);
-      hread(sample, key1);
-      hread(sample, key2);
-      d1 <= b1;
-      d2 <= b2;
-      k1 <= key1;
-      k2 <= key2;
-      wait for 1 ns;
-      assert (d1 = d2)
-         report "wtf";
-      wait for clk_per;
+      hread(sample, gold_encryption_key);
+      encryption_key <= gold_encryption_key;
+      for i in 0 to 10 loop
+         go <= '1';
+         iteration <= i;
+         wait for clk_per;
+         go <= '0';
+         wait until done = '1';
+         wait for 2*clk_per;
+         hread(sample, gold_round_key);
+         assert gold_round_key = round_key;
+      end loop;
    end loop;
+   
+   stop <= '1';
    
    wait;
    
