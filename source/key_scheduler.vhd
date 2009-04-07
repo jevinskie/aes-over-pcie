@@ -44,7 +44,7 @@ architecture behavioral of key_scheduler is
    
    
    type state_type is (
-      idle, load_key, rotate, sub_bytes, add_cols, rcon, check_done, be_done
+      idle, load_key, rotate, sub_bytes, add_cols, rcon, be_done
    );
    
    
@@ -100,21 +100,15 @@ begin
             if (r /= 3) then
                next_state <= sub_bytes;
             else
-               next_state <= add_cols;
-            end if;
-         when add_cols =>
-            if (r /= 3) then
-               next_state <= add_cols;
-            else
                next_state <= rcon;
             end if;
          when rcon =>
-            next_state <= check_done;
-         when check_done =>
-            if (c /= 3) then
-               next_state <= rotate;
-            else
+            next_state <= add_cols;
+         when add_cols =>
+            if (r = 3 and c = 3) then
                next_state <= be_done;
+            else
+               next_state <= add_cols;
             end if;
          when be_done =>
             next_state <= idle;
@@ -123,6 +117,7 @@ begin
    
    state_out : process(state, cur_key, new_key, encryption_key,
       sbox_return_reged, c, r, round)
+      variable temp_index : index;
    begin
       next_cur_key <= cur_key;
       next_new_key <= new_key;
@@ -130,27 +125,35 @@ begin
       c_clr <= '0';
       r_clr <= '0';
       done <= '0';
-      sbox_lookup <= new_key(3, c);
+      sbox_lookup <= (others => '-');
       case state is
          when idle =>
             -- nothing
          when load_key =>
             next_new_key <= encryption_key;
-            c_clr <= '1';
          when rotate =>
             r_clr <= '1';
+            sbox_lookup <= cur_key(1, 3);
             for i in index loop
-               next_new_key(i, c) <= new_key(to_integer(to_unsigned(i, 2)+1), c);
+               next_new_key(i, 0) <= cur_key(to_integer(to_unsigned(i, 2)+1), 3);
             end loop;
          when sub_bytes =>
-            sbox_lookup <= new_key(to_integer(to_unsigned(r, 2) + 1), c);
+            sbox_lookup <= new_key(to_integer(to_unsigned(r, 2) + 1), 0);
             next_new_key(r, c) <= sbox_return_reged;
-         when add_cols =>
-            next_new_key(r, c) <= new_key(r, c) xor cur_key(r, c);
          when rcon =>
-            next_new_key(0, c) <= new_key(0, c) xor rcon_tbl(round);
-         when check_done =>
-            c_up <= '1';
+            next_new_key(0, 0) <= new_key(0, 0) xor rcon_tbl(round);
+            c_clr <= '1';
+            r_clr <= '1';
+         when add_cols =>
+            if (c = 0) then
+               temp_index := 0;
+            else
+               temp_index := c - 1;
+            end if;
+            next_new_key(r, c) <= new_key(r, temp_index) xor cur_key(r, c);
+            if (r = 3) then
+               c_up <= '1';
+            end if;
          when be_done =>
             next_cur_key <= new_key;
             done <= '1';
