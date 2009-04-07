@@ -16,6 +16,8 @@ package numeric_std_textio  is
         procedure READ(L:inout LINE; VALUE:out SIGNED; GOOD: out BOOLEAN);
         procedure READ(L:inout LINE; VALUE:out UNSIGNED);
         procedure READ(L:inout LINE; VALUE:out UNSIGNED; GOOD: out BOOLEAN);
+        procedure HREAD(L:inout LINE; VALUE:out UNSIGNED);
+        procedure HREAD(L:inout LINE; VALUE:out UNSIGNED; GOOD: out BOOLEAN);
 
         procedure WRITE(L:inout LINE; VALUE:in SIGNED;
                         JUSTIFIED:in SIDE := RIGHT; FIELD:in WIDTH := 0);
@@ -61,6 +63,22 @@ begin
   read(l, value, good);
   assert good
     report "numeric_std_textio: read(line,unsigned) failed"
+    severity error;
+end;
+
+procedure HREAD(L:inout LINE; VALUE:out UNSIGNED; GOOD: out BOOLEAN) is
+  variable slv_value : std_logic_vector(value'range);
+begin
+  hread(L, slv_value, good);
+  value:= unsigned(slv_value);
+end;
+
+procedure HREAD(L:inout LINE; VALUE:out UNSIGNED) is
+  variable good : boolean;
+begin
+  hread(l, value, good);
+  assert good
+    report "numeric_std_textio: hread(line,unsigned) failed"
     severity error;
 end;
 
