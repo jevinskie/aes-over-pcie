@@ -1,5 +1,6 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {sbox.vhd aes.vhd reduce_pack.vhd}
+analyze -format vhdl -lib WORK {aes.vhd reduce_pack.vhd}
+analyze -format vhdl -lib WORK {sbox.vhd}
 elaborate sbox -arch "dataflow" -lib WORK -update
 
 # Step 2: Set design constraints

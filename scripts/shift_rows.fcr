@@ -1,5 +1,6 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {shift_rows.vhd aes.vhd}
+analyze -format vhdl -lib WORK {aes.vhd}
+analyze -format vhdl -lib WORK {shift_rows.vhd}
 elaborate shift_rows -arch "dataflow" -lib WORK -update
 
 # Step 2: Set design constraints

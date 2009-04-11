@@ -1,5 +1,8 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {aes_top.vhd sbox.vhd top_top.vhd aes.vhd reduce_pack.vhd mix_columns.vhd state_filter_in.vhd state_filter_out.vhd shift_rows.vhd key_scheduler.vhd aes_rcu.vhd add_round_key.vhd state.vhd}
+analyze -format vhdl -lib WORK {aes.vhd reduce_pack.vhd}
+analyze -format vhdl -lib WORK {sbox.vhd mix_columns.vhd state_filter_in.vhd state_filter_out.vhd shift_rows.vhd key_scheduler.vhd aes_rcu.vhd add_round_key.vhd state.vhd}
+analyze -format vhdl -lib WORK {aes_top.vhd}
+analyze -format vhdl -lib WORK {top_top.vhd}
 elaborate top_top -arch "structural" -lib WORK -update
 
 # Step 2: Set design constraints

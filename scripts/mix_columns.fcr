@@ -1,5 +1,6 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {mix_columns.vhd aes.vhd}
+analyze -format vhdl -lib WORK {aes.vhd}
+analyze -format vhdl -lib WORK {mix_columns.vhd}
 elaborate mix_columns -arch "behavioral" -lib WORK -update
 
 # Step 2: Set design constraints

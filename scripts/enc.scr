@@ -1,2 +1,0 @@
-#!/bin/csh -f
-dc_shell-t -f ./scripts/enc.fcr | tee enc.log

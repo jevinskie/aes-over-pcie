@@ -1,5 +1,6 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {state_filter_in.vhd aes.vhd}
+analyze -format vhdl -lib WORK {aes.vhd}
+analyze -format vhdl -lib WORK {state_filter_in.vhd}
 elaborate state_filter_in -arch "behavioral" -lib WORK -update
 
 # Step 2: Set design constraints
