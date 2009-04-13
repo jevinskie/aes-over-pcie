@@ -29,6 +29,9 @@ report_area -hierarchy >> reports/$current_design.rep
 report_power -hier >> reports/$current_design.rep
 
 # Step 5: Output final VHDL and Verilog files
+set vhdlout_architecture_name "%a"
+set vhdlout_dont_write_types "true"
+set vhdlout_use_packages [list osu_ami05.all ieee.std_logic_1164 ieee.numeric_std work.aes]
 write -format vhdl -hierarchy -output "mapped/$current_design.vhd"
 write -format verilog -hierarchy -output "mapped/$current_design.v"
 echo "\nScript Done\n"
