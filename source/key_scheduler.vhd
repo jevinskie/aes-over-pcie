@@ -115,6 +115,7 @@ begin
       end case;
    end process state_nsl;
    
+   
    state_out : process(state, cur_key, new_key, encryption_key,
       sbox_return_reged, c, r, round)
       variable temp_index : index;
@@ -133,9 +134,10 @@ begin
             next_new_key <= encryption_key;
          when rotate =>
             r_clr <= '1';
+            c_clr <= '1';
             sbox_lookup <= cur_key(1, 3);
             for i in index loop
-               next_new_key(i, 0) <= cur_key(to_integer(to_unsigned(i, 2)+1), 3);
+               next_new_key(i, 0) <= cur_key(to_integer(to_unsigned(i, 2) + 1), 3);
             end loop;
          when sub_bytes =>
             sbox_lookup <= new_key(to_integer(to_unsigned(r, 2) + 1), 0);
@@ -211,3 +213,4 @@ begin
    round_key <= cur_key;
    
 end behavioral;
+
