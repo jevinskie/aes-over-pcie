@@ -29,7 +29,7 @@ architecture behavioral of state_filter_in is
    
 begin
    
-   process(i, subblock, s)
+   process(i, subblock, s, round_key)
       variable r, c : index;
       variable i_clamped : index;
    begin

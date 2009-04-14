@@ -65,6 +65,8 @@ SubBlockCounter: process(clk, nrst)
 Next_state: process (state, roundcount, blockcount, key_done)
       begin
       start_key <= '0';
+      subblock <= identity;
+      p <= 0;
       case state is
          when IDLE =>
              nextstate <= KEYSCH;
@@ -95,6 +97,7 @@ Next_state: process (state, roundcount, blockcount, key_done)
                     p <= blockcount;
                     subblock <= add_round_key;
                     nextstate <= ADDRNDKY;
+                    nextroundcount <= roundcount;    --check if not working properly
                 else
                    nextblockcount <= 0;
                    nextroundcount <= roundcount + 1;
