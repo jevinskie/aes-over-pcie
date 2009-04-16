@@ -88,6 +88,18 @@ class aes:
       
       return key
    
+   def str_to_hex_slice(self, str):
+      assert len(str) == 8
+                   
+      nums = [int(str[2*j:2*j+2], 16) for j in range(0, 4)]
+      
+      key = [None for j in range(0, 4)]
+      
+      for i in range(0, 4):
+          key[i] = nums[i]
+      
+      return key
+     
    
    def hex_to_str(self, hex):
       str = ""
@@ -96,6 +108,11 @@ class aes:
             str += "%02X" % hex[j][i]
       return str
    
+   def hex_slice_to_str(self, hex):
+      str = ""
+      for i in range(0,4):
+          str += "%02X" % hex[i]
+      return str
    
    def block_to_str(self, b):
       str = ""
