@@ -3,11 +3,18 @@
 -- Author:      Zachary Curosh
 -- Lab Section: 337-02
 -- Version:     1.0  Initial Test Bench
+-- Modified: 2009-4-18, added python integration
 
 use work.aes.all;
+use work.aes_textio.all;
+use work.numeric_std_textio.all;
+
+use std.textio.all;
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
 
 entity tb_shift_rows is
    
@@ -20,62 +27,44 @@ end entity tb_shift_rows;
 architecture test of tb_shift_rows is
    
    signal data_in    : row;
-   signal num_shifts : index;
    signal data_out   : row;
-   
-   
-   type test_sample is record
-      r     : row;
-      num   : index;
-      gold  : row;
-   end record test_sample;
-   
-   
-   type sample_array is array (natural range <>) of test_sample;
-   constant test_samples : sample_array :=
-   (
-      ((x"db", x"13", x"53", x"45"), 0,
-       (x"db", x"13", x"53", x"45")),
+   signal num_shifts : index;
       
-      ((x"f2", x"0a", x"22", x"5c"), 1,
-       (x"0a", x"22", x"5c", x"f2")),
-      
-      ((x"a3", x"01", x"b3", x"09"), 2,
-       (x"b3", x"09", x"a3", x"01")),
-      
-      ((x"c7", x"d6", x"c6", x"a6"), 3,
-       (x"a6", x"c7", x"d6", x"c6")),
-      
-      ((x"d4", x"d3", x"d4", x"d5"), 1,
-       (x"d3", x"d4", x"d5", x"d4")),
-      
-      ((x"2d", x"26", x"31", x"4c"), 2,
-       (x"31", x"4c", x"2d", x"26"))
-   );
-   
-   
 begin
    
    dut : entity work.shift_rows(dataflow)
       port map (
-         data_in => data_in,
-         num_shifts => num_shifts,
-         data_out => data_out
+         data_in => data_in, data_out => data_out, num_shifts => num_shifts
       );
    
 process
+    
+    file data : text open read_mode is "test_vectors/tb_shift_rows.dat";
+    variable sample : line;
+    variable data_input : state_type;
+    variable gold_data_output : state_type;
+    variable temp, gold_temp : slice;
+    
 begin
    
-   for i in test_samples'range loop
-      data_in <= test_samples(i).r;
-      num_shifts <= test_samples(i).num;
-      wait for clk_per;
-      assert data_out = test_samples(i).gold
-         report "data_out = test_samples(i).gold check";
+   while not endfile(data) loop
+      readline(data, sample);
+      hread(sample, data_input);
+      hread(sample, gold_data_output);
+      for j in 0 to 3 loop
+         for i in 0 to 3 loop
+           temp(i) := data_input(j,i);
+           gold_temp(i) := gold_data_output(j,i);
+         end loop;
+         data_in <= temp;
+         num_shifts <= j;
+         wait for clk_per*2;
+         assert gold_temp = data_out;
+      end loop;
    end loop;
    
    wait;
-   
+
 end process;
 
 end architecture test;

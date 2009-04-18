@@ -30,7 +30,7 @@ TEST_ENTITIES =	aes_textio           \
 						tb_sbox				   \
 						tb_shift_rows
 
-TEST_VECTORS =    tb_key_scheduler tb_mix_columns
+TEST_VECTORS =    tb_key_scheduler tb_mix_columns tb_shift_rows
 
 ENTITY_DIRS = $(foreach ent,$(ENTITIES),$(WORKDIR)/$(ent))
 TEST_ENTITY_DIRS = $(foreach test,$(TEST_ENTITIES),$(WORKDIR)/$(test))
