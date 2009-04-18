@@ -19,7 +19,7 @@ ENTITIES =	add_round_key		\
 				state_filter_in	\
 				state_filter_out	\
 				state					\
-				top_top
+#				top_top
 
 TEST_ENTITIES =	aes_textio           \
                   numeric_std_textio   \
@@ -30,7 +30,7 @@ TEST_ENTITIES =	aes_textio           \
 						tb_sbox				   \
 						tb_shift_rows
 
-TEST_VECTORS =    tb_key_scheduler tb_mix_columns
+TEST_VECTORS =    tb_key_scheduler tb_mix_columns tb_aes_top
 
 ENTITY_DIRS = $(foreach ent,$(ENTITIES),$(WORKDIR)/$(ent))
 TEST_ENTITY_DIRS = $(foreach test,$(TEST_ENTITIES),$(WORKDIR)/$(test))

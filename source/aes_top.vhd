@@ -15,7 +15,10 @@ entity aes_top is
    
    port (
       clk   : in std_logic;
-      nrst  : in std_logic
+      nrst  : in std_logic;
+      enc_key : in key_type;
+      pt    : in state_type;
+      ct    : out state_type
    );
    
 end entity aes_top;
@@ -30,7 +33,6 @@ architecture structural of aes_top is
    signal filtered            : slice;
    signal round_num           : round_type;
 	signal round_key				: key_type;
-	signal enc_key					: key_type;
    signal sub_bytes_out       : byte;
    signal shift_rows_out      : row;
    signal mix_columns_out     : col;
@@ -90,6 +92,8 @@ begin
       encryption_key => enc_key, round_key => round_key,
       go => start_key, done => key_done
    );
+   
+   ct <= state_d;
    
 end architecture structural;
 
