@@ -14,11 +14,10 @@ use ieee.numeric_std.all;
 entity aes_top is
    
    port (
-      clk   : in std_logic;
-      nrst  : in std_logic;
-      enc_key : in key_type;
-      pt    : in state_type;
-      ct    : out state_type
+      clk      : in std_logic;
+      nrst     : in std_logic;
+      rx_data  : in byte;
+      ct       : out state_type
    );
    
 end entity aes_top;
@@ -41,7 +40,9 @@ architecture structural of aes_top is
    signal filtered_key        : byte;
    signal start_key           : std_logic;
    signal key_done            : std_logic;
-   signal sbox_lookup         : byte;
+   signal ks_sbox_lookup      : byte;
+   signal key_data            : byte;
+   signal key_load            : std_logic;
    
 begin
    
@@ -52,7 +53,8 @@ begin
    
    state_filter_in_b : entity work.state_filter_in(behavioral) port map (
       s => state_q, subblock => subblock, i => i, d_out => filtered,
-      filtered_key => filtered_key, round_key => round_key
+      filtered_key => filtered_key, round_key => round_key,
+      ks_sbox_lookup => ks_sbox_lookup
    );
    
    state_filter_out_b : entity work.state_filter_out(mux) port map (
@@ -87,10 +89,10 @@ begin
    );
    
    key_scheduler_b : entity work.key_scheduler(behavioral) port map (
-      clk => clk, nrst => nrst, sbox_lookup => sbox_lookup,
+      clk => clk, nrst => nrst, sbox_lookup => ks_sbox_lookup,
       sbox_return => sub_bytes_out, round => round_num,
-      encryption_key => enc_key, round_key => round_key,
-      go => start_key, done => key_done
+      round_key => round_key, go => start_key, done => key_done,
+      key_data => rx_data, key_index => i, key_load => key_load
    );
    
    ct <= state_d;
