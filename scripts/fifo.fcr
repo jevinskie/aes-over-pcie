@@ -1,0 +1,32 @@
+# Step 1:  Read in the source file
+analyze -format vhdl -lib WORK {aes.vhd}
+analyze -format vhdl -lib WORK {fifo.vhd}
+elaborate fifo -arch "behavioral" -lib WORK -update
+
+# Step 2: Set design constraints
+# Uncomment below to set timing, area, power, etc. constraints
+# set_max_delay <delay> -from "<input>" -to "<output>"
+# set_max_area <area>
+# set_max_total_power <power> mW
+create_clock clk -name clk -period 4
+
+# Step 3: Compile the design
+compile -map_effort medium
+
+# Step 4: Output reports
+current_design .
+report_timing -path full -delay max -max_paths 1 -nworst 1 > reports/$current_design.rep
+report_area >> reports/$current_design.rep
+report_power >> reports/$current_design.rep
+
+# Step 5: Output final VHDL and Verilog files
+set vhdlout_architecture_name "%a"
+set vhdlout_dont_write_types "true"
+set vhdlout_use_packages [list osu_ami05.all ieee.std_logic_1164 ieee.numeric_std work.aes]
+write -format vhdl -hierarchy -output "mapped/$current_design.vhd"
+write -format verilog -hierarchy -output "mapped/$current_design.v"
+echo "\nScript Done\n"
+echo "\nChecking Design\n"
+check_design
+exit
+

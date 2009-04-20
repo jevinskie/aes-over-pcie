@@ -17,6 +17,8 @@ entity aes_rcu is
       clk            : in std_logic;
       nrst           : in std_logic;
       key_done       : in std_logic;
+      got_key        : in std_logic;
+      got_pt         : in std_logic;
       p              : out g_index;
       subblock       : out subblock_type;
       current_round  : out round_type;
@@ -33,7 +35,7 @@ architecture behavioral of aes_rcu is
    type state_type is (
       idle, e_idle, load_pt, load_key, sub_bytes,
       mix_columns, shift_rows, add_round_key,
-      key_scheduler
+      key_scheduler, round_start, round_end
    );
    
    signal state, next_state               : state_type;
@@ -55,12 +57,59 @@ begin
    
    fsm_nsl : process(state)
    begin
-      next_state <= state;
       case state is
          when idle =>
-            next_state <= e_idle;
+            if (got_key = '1') then
+               next_state <= load_key;
+            elsif (got_pt = '1') then
+               next_state <= load_pt;
+            else
+               next_state <= idle;
+            end if;
          when e_idle =>
-            next_state <= idle;
+            next_state <= e_idle;
+         when round_start =>
+            next_state <= key_scheduler;
+         when key_scheduler =>
+            if (key_done = '0') then
+               next_state <= key_scheduler;
+            elsif (round_count = 0) then
+               next_state <= add_round_key;
+            else
+               next_state <= sub_bytes;
+            end if;
+         when sub_bytes =>
+            if (i /= 15) then
+               next_state <= sub_bytes;
+            else
+               next_state <= shift_rows;
+            end if;
+         when shift_rows =>
+            if (i /= 3) then
+               next_state <= shift_rows;
+            elsif (round_count /= 10) then
+               next_state <= mix_columns;
+            else
+               next_state <= add_round_key;
+            end if;
+         when mix_columns =>
+            if (i /= 3) then
+               next_state <= mix_columns;
+            else
+               next_state <= add_round_key;
+            end if;
+         when add_round_key =>
+            if (i /= 15) then
+               next_state <= add_round_key;
+            else
+               next_state <= round_end;
+            end if;
+         when round_end =>
+            if (round_count /= 10) then
+               next_state <= round_start;
+            else
+               next_state <= idle;
+            end if;
          when others =>
             -- nothing
       end case;

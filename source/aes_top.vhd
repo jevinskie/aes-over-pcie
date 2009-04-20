@@ -17,6 +17,8 @@ entity aes_top is
       clk      : in std_logic;
       nrst     : in std_logic;
       rx_data  : in byte;
+      got_key  : in std_logic;
+      got_pt   : in std_logic;
       ct       : out state_type
    );
    
@@ -83,7 +85,8 @@ begin
    aes_rcu_b : entity work.aes_rcu(behavioral) port map (
       clk => clk, nrst => nrst, p => i, subblock => subblock,
       current_round => round_num, start_key => start_key,
-      key_done => key_done, key_load => key_load
+      key_done => key_done, key_load => key_load,
+      got_key => got_key, got_pt => got_pt
    );
    
    key_scheduler_b : entity work.key_scheduler(behavioral) port map (
