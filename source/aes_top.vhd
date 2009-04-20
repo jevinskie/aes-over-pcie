@@ -36,12 +36,10 @@ architecture structural of aes_top is
    signal shift_rows_out      : row;
    signal mix_columns_out     : col;
    signal add_round_key_out   : byte;
-   signal load_out            : byte;
    signal filtered_key        : byte;
    signal start_key           : std_logic;
    signal key_done            : std_logic;
    signal ks_sbox_lookup      : byte;
-   signal key_data            : byte;
    signal key_load            : std_logic;
    
 begin
@@ -60,7 +58,7 @@ begin
    state_filter_out_b : entity work.state_filter_out(mux) port map (
       current_state => state_q, sub_bytes_out => sub_bytes_out,
       shift_rows_out => shift_rows_out, mix_columns_out => mix_columns_out,
-      add_round_key_out => add_round_key_out, load_out => load_out,
+      add_round_key_out => add_round_key_out, load_out => rx_data,
       subblock => subblock, i => i, next_state => state_d
 	);
    
@@ -82,10 +80,10 @@ begin
       data_out => add_round_key_out
    );
    
-   aes_rcu_b : entity work.aes_rcu(Behavioral) port map (
+   aes_rcu_b : entity work.aes_rcu(behavioral) port map (
       clk => clk, nrst => nrst, p => i, subblock => subblock,
       current_round => round_num, start_key => start_key,
-      key_done => key_done
+      key_done => key_done, key_load => key_load
    );
    
    key_scheduler_b : entity work.key_scheduler(behavioral) port map (
