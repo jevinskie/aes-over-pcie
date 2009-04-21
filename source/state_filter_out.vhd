@@ -171,7 +171,7 @@ begin
       for x in index loop
          for y in index loop
             case subblock is
-               when load =>
+               when load_pt =>
                   -- select just the indexed byte
                   if (x * 4 + y = i) then
                      next_state(x, y) <= load_out;
@@ -205,7 +205,7 @@ begin
                   -- select all the current bytes (already done)
                when sub_bytes =>
                   -- select just the indexed byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= sub_bytes_out;
                   end if;
                when shift_rows =>
@@ -220,12 +220,12 @@ begin
                   end if;
                when add_round_key =>
                   -- select just the index byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= add_round_key_out;
                   end if;
-               when load =>
+               when load_pt =>
                   -- select just the index byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= load_out;
                   end if;
                when key_scheduler =>

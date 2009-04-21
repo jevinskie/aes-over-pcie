@@ -35,7 +35,8 @@ architecture behavioral of aes_rcu is
    type state_type is (
       idle, e_idle, load_pt, load_key, sub_bytes,
       mix_columns, shift_rows, add_round_key,
-      key_scheduler, round_start, round_end
+      key_scheduler_start, key_scheduler_wait,
+      round_start, round_end, block_done
    );
    
    signal state, next_state               : state_type;
@@ -55,7 +56,7 @@ begin
       end if;
    end process fsm_reg;
    
-   fsm_nsl : process(state)
+   fsm_nsl : process(state, round_count, i, key_done, got_pt, got_key)
    begin
       case state is
          when idle =>
@@ -78,13 +79,15 @@ begin
             if (i /= 15) then
                next_state <= load_pt;
             else
-               next_state <= idle;
+               next_state <= round_start;
             end if;
          when round_start =>
-            next_state <= key_scheduler;
-         when key_scheduler =>
+            next_state <= key_scheduler_start;
+         when key_scheduler_start =>
+            next_state <= key_scheduler_wait;
+         when key_scheduler_wait =>
             if (key_done = '0') then
-               next_state <= key_scheduler;
+               next_state <= key_scheduler_wait;
             elsif (round_count = 0) then
                next_state <= add_round_key;
             else
@@ -120,19 +123,25 @@ begin
             if (round_count /= 10) then
                next_state <= round_start;
             else
-               next_state <= idle;
+               next_state <= block_done;
             end if;
+         when block_done =>
+            next_state <= idle;
          when others =>
             -- nothing
       end case;
    end process fsm_nsl;
    
-   fsm_output : process(state)
+   fsm_output : process(state, i)
    begin
       i_clr <= '0';
       i_up <= '0';
       round_count_clr <= '0';
       round_count_up <= '0';
+      start_key <= '0';
+      aes_done <= '0';
+      key_load <= '0';
+      subblock <= identity;
       
       case state is
          when idle =>
@@ -156,19 +165,30 @@ begin
          when shift_rows =>
             subblock <= shift_rows;
             i_up <= '1';
+            if (i = 3) then
+               i_clr <= '1';
+            end if;
          when mix_columns =>
             subblock <= mix_columns;
             i_up <= '1';
+            if (i = 3) then
+               i_clr <= '1';
+            end if;
          when add_round_key =>
             subblock <= add_round_key;
             i_up <= '1';
-         when key_scheduler =>
+         when key_scheduler_start =>
+            subblock <= key_scheduler;
+            start_key <= '1';
+         when key_scheduler_wait =>
             subblock <= key_scheduler;
          when round_start =>
-            round_count_clear <= '1';
+            subblock <= identity;
          when round_end =>
+            subblock <= identity;
             round_count_up <= '1';
-            
+         when block_done =>
+            aes_done <= '1';
          when others =>
             -- nothing
       end case;
@@ -188,7 +208,7 @@ begin
       if (round_count_clr = '1') then
          next_round_count <= 0;
       elsif (round_count_up = '1') then
-         next_round_count <= round_count + 1;
+         next_round_count <= (round_count + 1) mod 11;
       else
          next_round_count <= round_count;
       end if;
@@ -208,11 +228,14 @@ begin
       if (i_clr = '1') then
          next_i <= 0;
       elsif (i_up = '1') then
-         next_i <= i + 1;
+         next_i <= (i + 1) mod 16;
       else
          next_i <= i;
       end if;
    end process i_nsl;
+   
+   current_round <= round_count;
+   p <= i;
    
 end architecture behavioral;
 

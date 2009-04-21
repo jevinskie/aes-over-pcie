@@ -28,21 +28,24 @@ end entity tb_aes_top;
 architecture test of tb_aes_top is
    
    
-   signal clk              : std_logic := '0';
-   signal nrst             : std_logic := '1';
-   signal enc_key          : key_type;
-   signal pt               : state_type;
-   signal ct               : state_type;
+   signal clk     : std_logic := '0';
+   signal nrst    : std_logic := '1';
+   signal rx_data : byte;
+   signal got_key : std_logic := '0';
+   signal got_pt  : std_logic := '0';
+   signal aes_done   : std_logic;
+   signal ct      : state_type;
    -- clock only runs when stop isnt asserted
-   signal stop             : std_logic := '1';
+   signal stop    : std_logic := '1';
    
    
 begin
    
    
    dut : entity work.aes_top(structural) port map (
-      clk => clk, nrst => nrst, enc_key => enc_key,
-      pt => pt, ct => ct
+      clk => clk, nrst => nrst, rx_data => rx_data,
+      got_key => got_key, got_pt => got_pt,
+      aes_done => aes_done, ct => ct
    );
    
    
@@ -62,6 +65,7 @@ process
 begin
    
    stop <= '0';
+   
    nrst <= '0';
    wait for clk_per;
    nrst <= '1';
@@ -73,9 +77,25 @@ begin
       hread(sample, gold_enc_key);
       hread(sample, gold_pt);
       hread(sample, gold_ct);
-      enc_key <= gold_enc_key;
-      pt <= gold_pt;
-      
+      got_key <= '1';
+      wait for clk_per;
+      for i in g_index loop
+         got_key <= '1';
+         rx_data <= gold_enc_key(i mod 4, i / 4);
+         wait for clk_per;
+         got_key <= '0';
+      end loop;
+      wait for clk_per*2;
+      got_pt <= '1';
+      wait for clk_per;
+      for i in g_index loop
+         got_pt <= '1';
+         rx_data <= gold_pt(i mod 4, i / 4);
+         wait for clk_per;
+         got_pt <= '0';
+      end loop;
+      wait until aes_done = '1';
+      assert ct = gold_ct;
    end loop;
    -- leda DCVHDL_165 on
    

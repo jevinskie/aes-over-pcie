@@ -18,8 +18,8 @@ create_clock clk -name clk -period 4
 #uniquify
 
 # Step 3: Compile the design
-compile -map_effort medium
-#compile_ultra
+#compile -map_effort medium
+compile_ultra
 
 # Step 4: Output reports
 current_design .

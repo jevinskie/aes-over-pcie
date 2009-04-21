@@ -19,6 +19,7 @@ entity aes_top is
       rx_data  : in byte;
       got_key  : in std_logic;
       got_pt   : in std_logic;
+      aes_done : out std_logic;
       ct       : out state_type
    );
    
@@ -43,6 +44,7 @@ architecture structural of aes_top is
    signal key_done            : std_logic;
    signal ks_sbox_lookup      : byte;
    signal key_load            : std_logic;
+   signal ks_sbox_return      : byte;
    
 begin
    
@@ -53,8 +55,7 @@ begin
    
    state_filter_in_b : entity work.state_filter_in(behavioral) port map (
       s => state_q, subblock => subblock, i => i, d_out => filtered,
-      filtered_key => filtered_key, round_key => round_key,
-      ks_sbox_lookup => ks_sbox_lookup
+      filtered_key => filtered_key, round_key => round_key
    );
    
    state_filter_out_b : entity work.state_filter_out(mux) port map (
@@ -68,6 +69,7 @@ begin
       clk => clk, a => filtered(0), b => sub_bytes_out
    );
    
+   num_shifts <= i mod 4;
    shift_rows_b : entity work.shift_rows(dataflow) port map (
       data_in => filtered, num_shifts => num_shifts,
       data_out => shift_rows_out
@@ -86,17 +88,21 @@ begin
       clk => clk, nrst => nrst, p => i, subblock => subblock,
       current_round => round_num, start_key => start_key,
       key_done => key_done, key_load => key_load,
-      got_key => got_key, got_pt => got_pt
+      got_key => got_key, got_pt => got_pt, aes_done => aes_done
    );
    
    key_scheduler_b : entity work.key_scheduler(behavioral) port map (
       clk => clk, nrst => nrst, sbox_lookup => ks_sbox_lookup,
-      sbox_return => sub_bytes_out, round => round_num,
+      sbox_return => ks_sbox_return, round => round_num,
       round_key => round_key, go => start_key, done => key_done,
       key_data => rx_data, key_index => i, key_load => key_load
    );
    
-   ct <= state_d;
+   ks_sbox_b : entity work.sbox(dataflow) port map (
+      clk => clk, a => ks_sbox_lookup, b => ks_sbox_return
+   );
+   
+   ct <= state_q;
    
 end architecture structural;
 

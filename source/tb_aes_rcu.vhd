@@ -42,7 +42,9 @@ begin
               subblock => subblock,
               start_key => start_key,
               key_done => done,
-              current_round => current_round
+              current_round => current_round,
+              got_pt => open,
+              got_key => open,
               );
               
   keysched: entity work.key_scheduler(behavioral) port map(
@@ -51,7 +53,7 @@ begin
              sbox_lookup=>sbox_lookup,
              sbox_return=>sbox_return,
              round => current_round,
-             encryption_key => encryption_key,
+             key_load,
              round_key => round_key,
              go => start_key,
              done => done
