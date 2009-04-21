@@ -36,7 +36,7 @@ begin
    process(data_in, num_shifts)
    begin
       for k in index loop
-         data_out(k) <= data_in((num_shifts + k) mod 4);
+         data_out(k) <= data_in(to_integer(to_unsigned(num_shifts, 2) + k));
       end loop;
    end process;
    

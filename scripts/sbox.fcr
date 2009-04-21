@@ -13,7 +13,8 @@ set_input_delay 0 -clock pseudo [all_inputs]
 set_output_delay 0 -clock pseudo [all_outputs]
 
 # Step 3: Compile the design
-compile -map_effort medium
+#compile -map_effort medium
+compile_ultra
 
 # Step 4: Output reports
 current_design .

@@ -27,7 +27,7 @@ begin
    
    
 	aes_top_b : entity work.aes_top(structural) port map (
-		clk => clk, nrst => nrst
+		clk => clk, nrst => nrst, enc_key => (others => '0')
 	);
 	
 	

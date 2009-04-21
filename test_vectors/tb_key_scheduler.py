@@ -30,7 +30,7 @@ increasing = [[4*j+i for j in range(0, 4)] for i in range(0, 4)]
 print_key_schedule(e, increasing)
 
 
-total = 1024
+total = 10
 
 for i in range(0, total):
    key = gen_rand_key()

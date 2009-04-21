@@ -26,7 +26,7 @@ package aes is
    subtype b_index is integer range 0 to 17;
    type subblock_type is
       (identity, sub_bytes, mix_columns,
-       shift_rows, add_round_key, load);
+       shift_rows, add_round_key, load_pt, key_scheduler);
    
    subtype round_type is integer range 0 to 11;
    

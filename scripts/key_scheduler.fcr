@@ -11,7 +11,9 @@ elaborate key_scheduler -arch "behavioral" -lib WORK -update
 create_clock clk -name clk -period 4
 
 # Step 3: Compile the design
+set auto_wire_load_selection "true"
 compile -map_effort medium
+#compile_ultra
 
 # Step 4: Output reports
 current_design .

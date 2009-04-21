@@ -2,7 +2,7 @@
 -- Created:     2009-03-30
 -- Author:      Jevin Sweval
 -- Lab Section: 337-02
--- Version:     1.0  Initial Design Entry
+-- Version:     1.1  Initial Design Entry
 -- Description: Rijndael RCU
 
 use work.aes.all;
@@ -14,146 +14,229 @@ use ieee.numeric_std.all;
 entity aes_rcu is
    
    port (
-      clk      : in std_logic;
-      nrst     : in std_logic;
-      p        : out g_index;
-      subblock : out subblock_type;
-      current_round    : out round_type;
-      start_key: out std_logic;
-      key_done : in std_logic
+      clk            : in std_logic;
+      nrst           : in std_logic;
+      key_done       : in std_logic;
+      got_key        : in std_logic;
+      got_pt         : in std_logic;
+      p              : out g_index;
+      subblock       : out subblock_type;
+      current_round  : out round_type;
+      start_key      : out std_logic;
+      key_load       : out std_logic;
+      aes_done       : out std_logic
    );
    
 end entity aes_rcu;
 
 
-architecture Behavioral of aes_rcu is
-   type state_type is (IDLE, KEYSCH, ADDRNDKY, SUBBY, SHFTRWS, MXCOLS);
-   signal state, nextstate: state_type;
-   signal roundcount, nextroundcount: round_type;
-   signal blockcount, nextblockcount: b_index;
+architecture behavioral of aes_rcu is
    
-Begin
-StateReg: process (clk, nrst)
+   type state_type is (
+      idle, e_idle, load_pt, load_key, sub_bytes,
+      mix_columns, shift_rows, add_round_key,
+      key_scheduler_start, key_scheduler_wait,
+      round_start, round_end, block_done
+   );
+   
+   signal state, next_state               : state_type;
+   signal round_count, next_round_count   : round_type;
+   signal round_count_up, round_count_clr : std_logic;
+   signal i, next_i                       : g_index;
+   signal i_up, i_clr                     : std_logic;
+   
+begin
+   
+   fsm_reg : process(clk, nrst)
    begin
-       -- on reset, the RCU goes to the IDLE state, otherwise it goes
-       -- to the next state.
-       if (nrst = '0') then
-           state <= IDLE;
-       elsif (rising_edge(clk)) then
-           state <= nextstate;
-       end if;
-end process StateReg;
-
-RoundCounter: process(clk, nrst)
+      if (nrst = '0') then
+         state <= idle;
+      elsif rising_edge(clk) then
+         state <= next_state;
+      end if;
+   end process fsm_reg;
+   
+   fsm_nsl : process(state, round_count, i, key_done, got_pt, got_key)
    begin
-       if (nrst = '0') then
-           roundcount <= 0;
-       elsif (rising_edge(clk)) then
-           roundcount <= nextroundcount;
-       end if;
-   end process RoundCounter;
-
-SubBlockCounter: process(clk, nrst)
-     begin
-            if (nrst = '0') then
-                blockcount <= 0;
-            elsif (rising_edge(clk)) then
-                blockcount <= nextblockcount;
-            end if;
-    end process SubBlockCounter;
-        
-Next_state: process (state, roundcount, blockcount, key_done)
-      begin
-      start_key <= '0';
-      subblock <= identity;
-      p <= 0;
+      next_state <= state;
       case state is
-         when IDLE =>
-             nextstate <= KEYSCH;
-             nextroundcount <= 0;
-             nextblockcount <= 0;
-             start_key <= '1';
-         when KEYSCH =>
-             start_key <= '1';           
-             if (key_done = '0') then
-                 p <= roundcount;
-                 subblock <= identity;
-                 nextstate <= KEYSCH;
-             else
-             --send go signal to key_scheduler, wait in this
-             --state until it sends done signal
-             
-             --reset block counter
-                 nextblockcount <= 0;
-                 nextstate <= ADDRNDKY;
-             end if;
-         when ADDRNDKY =>
-             --loop through 16 times
-            nextblockcount <= blockcount + 1;
-            --nextroundcount <= roundcount + 1;
-            if (roundcount < 10) then
-                if (blockcount < 16) then
-                    --send bus signals for addroundkey
-                    p <= blockcount;
-                    subblock <= add_round_key;
-                    nextstate <= ADDRNDKY;
-                    nextroundcount <= roundcount;    --check if not working properly
-                else
-                   nextblockcount <= 0;
-                   nextroundcount <= roundcount + 1;
-                   nextstate <= SUBBY;
-               end if;
-             else
-                nextstate <= IDLE;
-             end if;
-         when SUBBY =>
-             nextblockcount <= blockcount + 1;
-             if (blockcount < 16) then
-                 p <= blockcount;
-                 subblock <= sub_bytes;
-                 nextstate <= SUBBY;
-             else
-                 nextblockcount <= 0;
-                 nextstate <= SHFTRWS;
-             end if;
-         when SHFTRWS =>
-             nextblockcount <= blockcount + 1;
-             if (roundcount < 10) then
-                 if (blockcount < 4) then
-                    p <= blockcount;
-                    subblock <= shift_rows; 
-                    nextstate <= SHFTRWS;
-                 else
-                    nextblockcount <= 0;
-                    nextstate <= MXCOLS;
-                 end if;
-             else
-                if (blockcount < 4) then
-                   p <= blockcount;
-                   subblock <= shift_rows; 
-                   nextstate <= SHFTRWS;
-                else
-                   nextblockcount <= 0;
-                   nextstate <= KEYSCH;
-                   start_key <= '1';
-                end if;
-             end if;
-         when MXCOLS =>
-             nextblockcount <= blockcount + 1;
-             if (blockcount < 4) then
-                 p <= blockcount;
-                 subblock <= mix_columns;
-                 nextstate <= MXCOLS;
-             else
-                 nextblockcount <= 0;
-                 nextstate <= KEYSCH;
-                 start_key <= '1';
-             end if;
-         when others =>       
-            nextstate <= IDLE;
-         end case;
-end process Next_state;
-  
-  current_round <= roundcount;
-end architecture Behavioral;
+         when idle =>
+            if (got_key = '1') then
+               next_state <= load_key;
+            elsif (got_pt = '1') then
+               next_state <= load_pt;
+            else
+               next_state <= idle;
+            end if;
+         when e_idle =>
+            next_state <= e_idle;
+         when load_key =>
+            if (i /= 15) then
+               next_state <= load_key;
+            else
+               next_state <= idle;
+            end if;
+         when load_pt =>
+            if (i /= 15) then
+               next_state <= load_pt;
+            else
+               next_state <= round_start;
+            end if;
+         when round_start =>
+            next_state <= key_scheduler_start;
+         when key_scheduler_start =>
+            next_state <= key_scheduler_wait;
+         when key_scheduler_wait =>
+            if (key_done = '0') then
+               next_state <= key_scheduler_wait;
+            elsif (round_count = 0) then
+               next_state <= add_round_key;
+            else
+               next_state <= sub_bytes;
+            end if;
+         when sub_bytes =>
+            if (i /= 15) then
+               next_state <= sub_bytes;
+            else
+               next_state <= shift_rows;
+            end if;
+         when shift_rows =>
+            if (i /= 3) then
+               next_state <= shift_rows;
+            elsif (round_count /= 10) then
+               next_state <= mix_columns;
+            else
+               next_state <= add_round_key;
+            end if;
+         when mix_columns =>
+            if (i /= 3) then
+               next_state <= mix_columns;
+            else
+               next_state <= add_round_key;
+            end if;
+         when add_round_key =>
+            if (i /= 15) then
+               next_state <= add_round_key;
+            else
+               next_state <= round_end;
+            end if;
+         when round_end =>
+            if (round_count /= 10) then
+               next_state <= round_start;
+            else
+               next_state <= block_done;
+            end if;
+         when block_done =>
+            next_state <= idle;
+         when others =>
+            -- nothing
+      end case;
+   end process fsm_nsl;
+   
+   fsm_output : process(state, i)
+   begin
+      i_clr <= '0';
+      i_up <= '0';
+      round_count_clr <= '0';
+      round_count_up <= '0';
+      start_key <= '0';
+      aes_done <= '0';
+      key_load <= '0';
+      subblock <= identity;
+      
+      case state is
+         when idle =>
+            subblock <= identity;
+            i_clr <= '1';
+            round_count_clr <= '1';
+         when e_idle =>
+            subblock <= identity;
+            i_clr <= '1';
+            round_count_clr <= '1';
+         when load_key =>
+            subblock <= identity;
+            key_load <= '1';
+            i_up <= '1';
+         when load_pt =>
+            subblock <= load_pt;
+            i_up <= '1';
+         when sub_bytes =>
+            subblock <= sub_bytes;
+            i_up <= '1';
+         when shift_rows =>
+            subblock <= shift_rows;
+            i_up <= '1';
+            if (i = 3) then
+               i_clr <= '1';
+            end if;
+         when mix_columns =>
+            subblock <= mix_columns;
+            i_up <= '1';
+            if (i = 3) then
+               i_clr <= '1';
+            end if;
+         when add_round_key =>
+            subblock <= add_round_key;
+            i_up <= '1';
+         when key_scheduler_start =>
+            subblock <= key_scheduler;
+            start_key <= '1';
+         when key_scheduler_wait =>
+            subblock <= key_scheduler;
+         when round_start =>
+            subblock <= identity;
+         when round_end =>
+            subblock <= identity;
+            round_count_up <= '1';
+         when block_done =>
+            aes_done <= '1';
+         when others =>
+            -- nothing
+      end case;
+   end process fsm_output;
+   
+   -- leda C_1406 off
+   round_count_reg : process(clk)
+   begin
+      if rising_edge(clk) then
+         round_count <= next_round_count;
+      end if;
+   end process round_count_reg;
+   -- leda C_1406 on
+   
+   round_count_nsl : process(round_count, round_count_up, round_count_clr)
+   begin
+      if (round_count_clr = '1') then
+         next_round_count <= 0;
+      elsif (round_count_up = '1') then
+         next_round_count <= to_integer(to_unsigned(round_count, 4) + 1);
+      else
+         next_round_count <= round_count;
+      end if;
+   end process round_count_nsl;
+   
+   -- leda C_1406 off
+   i_reg : process(clk)
+   begin
+      if rising_edge(clk) then
+         i <= next_i;
+      end if;
+   end process i_reg;
+   -- leda C_1406 on
+   
+   i_nsl : process(i, i_up, i_clr)
+   begin
+      if (i_clr = '1') then
+         next_i <= 0;
+      elsif (i_up = '1') then
+         next_i <= to_integer(to_unsigned(i, 4) + 1);
+      else
+         next_i <= i;
+      end if;
+   end process i_nsl;
+   
+   current_round <= round_count;
+   p <= i;
+   
+end architecture behavioral;
 
