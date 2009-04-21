@@ -205,11 +205,17 @@ begin
    -- leda C_1406 on
    
    round_count_nsl : process(round_count, round_count_up, round_count_clr)
+      variable nrc : round_type;
    begin
       if (round_count_clr = '1') then
          next_round_count <= 0;
       elsif (round_count_up = '1') then
-         next_round_count <= to_integer(to_unsigned(round_count, 4) + 1);
+         if (round_count = 11) then
+            nrc := 0;
+         else
+            nrc := round_count + 1;
+         end if;
+         next_round_count <= nrc;
       else
          next_round_count <= round_count;
       end if;

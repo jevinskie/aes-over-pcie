@@ -16,15 +16,15 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 
-entity tb_matttest is
+entity tb_mix_columns is
    
    generic (
       clk_per  : time := 4 ns
    );
    
-end entity tb_matttest;
+end entity tb_mix_columns;
 
-architecture test of tb_matttest is
+architecture test of tb_mix_columns is
    
    signal d_in    : col;
    signal d_out   : col;

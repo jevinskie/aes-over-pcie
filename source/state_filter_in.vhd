@@ -38,13 +38,12 @@ begin
          d_out(j) <= (others => '0');
       end loop;
       
-      d_out(0) <= s(r, c);
-      
-      filtered_key <= round_key(r, c);
-      
       i_clamped := to_integer(to_unsigned(i, 2));
       r := i_clamped;
       c := i / 4;
+      
+      d_out(0) <= s(r, c);
+      filtered_key <= round_key(r, c);
       
       case subblock is
          when sub_bytes =>

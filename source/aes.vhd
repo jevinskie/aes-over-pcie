@@ -23,7 +23,6 @@ package aes is
    end record pntr;
    
    subtype g_index is integer range 0 to 15;
-   subtype b_index is integer range 0 to 17;
    type subblock_type is
       (identity, sub_bytes, mix_columns,
        shift_rows, add_round_key, load_pt, key_scheduler);

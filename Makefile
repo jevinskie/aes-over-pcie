@@ -23,9 +23,9 @@ ENTITIES =	add_round_key		\
 #				top_top
 
 TEST_ENTITIES =	aes_textio           \
+                  aes_top              \
                   numeric_std_textio   \
                   tb_add_round_key	   \
-#						tb_aes_rcu			   \
                   tb_fifo              \
 						tb_key_scheduler	   \
 						tb_mix_columns		   \
@@ -71,6 +71,7 @@ tb_mix_columns: aes
 tb_sbox: aes
 tb_shift_rows: aes
 tb_aes_rcu: aes
+tb_aes_top: aes
 tb_key_scheduler: aes aes_textio
 aes_textio: aes numeric_std_textio
 
