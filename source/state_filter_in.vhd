@@ -35,13 +35,15 @@ begin
    begin
       -- by default output dont cares
       for j in index loop
-         d_out(j) <= (others => '-');
+         d_out(j) <= (others => '0');
       end loop;
       
-      filtered_key <= (others => '-');
+      d_out(0) <= s(r, c);
       
-      i_clamped := i mod 4;
-      r := i mod 4;
+      filtered_key <= round_key(r, c);
+      
+      i_clamped := to_integer(to_unsigned(i, 2));
+      r := i_clamped;
       c := i / 4;
       
       case subblock is
@@ -61,7 +63,7 @@ begin
          when add_round_key =>
             -- output the indexed byte
             d_out(0) <= s(r, c);
-            filtered_key <= round_key(r, c);
+            --filtered_key <= round_key(r, c);
          when key_scheduler =>
             --d_out(0) <= ks_sbox_lookup;
          when others =>

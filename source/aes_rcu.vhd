@@ -58,6 +58,7 @@ begin
    
    fsm_nsl : process(state, round_count, i, key_done, got_pt, got_key)
    begin
+      next_state <= state;
       case state is
          when idle =>
             if (got_key = '1') then
@@ -208,7 +209,7 @@ begin
       if (round_count_clr = '1') then
          next_round_count <= 0;
       elsif (round_count_up = '1') then
-         next_round_count <= (round_count + 1) mod 11;
+         next_round_count <= to_integer(to_unsigned(round_count, 4) + 1);
       else
          next_round_count <= round_count;
       end if;
@@ -228,7 +229,7 @@ begin
       if (i_clr = '1') then
          next_i <= 0;
       elsif (i_up = '1') then
-         next_i <= (i + 1) mod 16;
+         next_i <= to_integer(to_unsigned(i, 4) + 1);
       else
          next_i <= i;
       end if;

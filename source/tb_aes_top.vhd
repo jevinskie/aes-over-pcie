@@ -19,7 +19,7 @@ use ieee.numeric_std.all;
 entity tb_aes_top is
    
    generic (
-      clk_per  : time := 4 ns
+      clk_per  : time := 6 ns
    );
    
 end entity tb_aes_top;

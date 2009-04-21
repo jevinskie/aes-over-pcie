@@ -42,7 +42,7 @@ begin
                   next_state(x, y) <= current_state(x, y);
                when sub_bytes =>
                   -- dont select the indexed byte
-                  if (x * 4 + y /= i) then
+                  if (x + y * 4 /= i) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
@@ -56,21 +56,21 @@ begin
                   end if;
                when mix_columns =>
                   -- dont select the indexed column
-                  if (y /= i mod 4) then
+                  if (y /= to_integer(to_unsigned(i, 2))) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
                when add_round_key =>
                   -- dont select the indexed byte
-                  if (x * 4 + y /= i) then
+                  if (x + y * 4 /= i) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
                when load_pt =>
                   -- dont select the indexed byte
-                  if (x * 4 + y /= i) then
+                  if (x + y * 4 /= i) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
@@ -93,7 +93,7 @@ begin
             case subblock is
                when sub_bytes =>
                   -- select just the indexed byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= sub_bytes_out;
                   else
                      next_state(x, y) <= (others => 'Z');
@@ -153,7 +153,7 @@ begin
             case subblock is
                when add_round_key =>
                   -- select just the indexed byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= add_round_key_out;
                   else
                      next_state(x, y) <= (others => 'Z');
@@ -173,7 +173,7 @@ begin
             case subblock is
                when load_pt =>
                   -- select just the indexed byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= load_out;
                   else
                      next_state(x, y) <= (others => 'Z');

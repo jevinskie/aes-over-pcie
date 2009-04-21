@@ -17,8 +17,12 @@ create_clock clk -name clk -period 4
 #set_flatten true -effort high
 #uniquify
 
+set compile_auto_ungroup_delay_num_cells 1
+
 # Step 3: Compile the design
 #compile -map_effort medium
+compile_ultra
+
 compile_ultra
 
 # Step 4: Output reports
