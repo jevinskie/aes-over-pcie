@@ -96,6 +96,7 @@ begin
       end loop;
       wait until aes_done = '1';
       assert ct = gold_ct;
+      wait for clk_per*10;
    end loop;
    -- leda DCVHDL_165 on
    
