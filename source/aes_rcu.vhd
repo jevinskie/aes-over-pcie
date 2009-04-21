@@ -68,6 +68,18 @@ begin
             end if;
          when e_idle =>
             next_state <= e_idle;
+         when load_key =>
+            if (i /= 15) then
+               next_state <= load_key;
+            else
+               next_state <= idle;
+            end if;
+         when load_pt =>
+            if (i /= 15) then
+               next_state <= load_pt;
+            else
+               next_state <= idle;
+            end if;
          when round_start =>
             next_state <= key_scheduler;
          when key_scheduler =>
@@ -117,13 +129,46 @@ begin
    
    fsm_output : process(state)
    begin
-      key_load <= '0';
       i_clr <= '0';
+      i_up <= '0';
+      round_count_clr <= '0';
+      round_count_up <= '0';
+      
       case state is
          when idle =>
+            subblock <= identity;
             i_clr <= '1';
+            round_count_clr <= '1';
          when e_idle =>
+            subblock <= identity;
+            i_clr <= '1';
+            round_count_clr <= '1';
+         when load_key =>
+            subblock <= identity;
             key_load <= '1';
+            i_up <= '1';
+         when load_pt =>
+            subblock <= load_pt;
+            i_up <= '1';
+         when sub_bytes =>
+            subblock <= sub_bytes;
+            i_up <= '1';
+         when shift_rows =>
+            subblock <= shift_rows;
+            i_up <= '1';
+         when mix_columns =>
+            subblock <= mix_columns;
+            i_up <= '1';
+         when add_round_key =>
+            subblock <= add_round_key;
+            i_up <= '1';
+         when key_scheduler =>
+            subblock <= key_scheduler;
+         when round_start =>
+            round_count_clear <= '1';
+         when round_end =>
+            round_count_up <= '1';
+            
          when others =>
             -- nothing
       end case;

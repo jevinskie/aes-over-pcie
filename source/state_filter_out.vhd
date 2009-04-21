@@ -68,7 +68,7 @@ begin
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
-               when load =>
+               when load_pt =>
                   -- dont select the indexed byte
                   if (x * 4 + y /= i) then
                      next_state(x, y) <= current_state(x, y);
@@ -166,7 +166,7 @@ begin
    end process add_round_key_proc;
    
    
-   load_proc : process(subblock, i, current_state, load_out)
+   load_pt_proc : process(subblock, i, current_state, load_out)
    begin
       for x in index loop
          for y in index loop
@@ -183,7 +183,7 @@ begin
             end case;
          end loop;
       end loop;
-   end process load_proc;
+   end process load_pt_proc;
    
 end architecture tristate;
 
