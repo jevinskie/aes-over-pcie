@@ -67,7 +67,8 @@ PPPPPPPP|PPPPPPPP|PPPPPPPP|PPPPPPPP
 
 
 
-Data Link Packets general format:
+-------------------------------------------------------------------
+Data Link Layer Packets general format:
 Bytes 0-3: Type(8)-Reserved(12)-AckNakSeqNumber(12)
 Bytes 4-7: CRC(16)-Reserved(4)-TLPSeqNumber(12)
 Bytes 8-N: TLP Header-Payload-Digest
@@ -75,13 +76,36 @@ Last 4 Bytes: LCRC
 CRC - pcie11.pdf pg 140
 LCRC - pcie11.pdf pg 144-145
 
+Two parts - DLLP (used for Ack/Nak mainly)
+	  - Link Packet (TLP packet with prepended CRC, Seq# for error checking)
+
+(DLLP)
 DDDDDDDD|00000000|0000SSSS|SSSSSSSS	--D is DLLP type ('00000000' for ack)
-CCCCCCCC|CCCCCCCC|0000TTTT|TTTTTTTT	--S is AckNakSeq, C is CRC, T is TLPSeq
+CCCCCCCC|CCCCCCCC|
+(Link Packet)
+		  0000TTTT|TTTTTTTT	--S is AckNakSeq, C is CRC, T is TLPSeq
 ........|........|........|........	--TLP packet stuff
 ........|........|........|........
 ........|........|........|........
 LLLLLLLL|LLLLLLLL|LLLLLLLL|LLLLLLLL	--L bits are LCRC stuff
 
-Transmitter must calculater LCRC, Receiver must verify it
-TLPSeqNumber increments with each TLP sent (I think...)
+TLPSeqNumber increments with each TLP sent (I think...), we need to keep a counter for this  
 AckNakSeqNumber and TLPSeqNumber should match? pg 152
+
+Data Link Layer Sequence of operations
+-Transmiter constructs DLLP additions around the TLP, including CRC
+-The receiver computes the CRC, compares, and then sends an ACK/NAK packet back, strips the Link Packet out and sends it to the transaction layer (ignoring extra things added by DLL)
+-If the transmiter receives a NAK back, it needs to resend the whole packet
+(see googlebooks PCI System Architecture pg 210-211)
+
+OVERALL SEQUENCE OF OPERATIONS:
+For sending data:
+-Transaction Layer builds TLP header, data payload, digest based on request from core
+-Data Link layer assigns a sequence number and computes LCRC for the TLP (including Sequence Number), then passes it to Physical layer (our external IC; we are done here)
+-Physical layer performs byte striping, scrambling, encoding, serialization and sends the packet over the lane to the receiver
+
+For receiving data:
+-Physical layer deserializings, decodes, undos byte striping performed
+-(we start here) Data link layer calculates CRC and checks against received value, also checks sequence number, if no errors passes to transaction layer
+-DLL also notifies the send with an ack or nak DLLP
+-Transaction layer decodes the payload and starts appropriate actions in core
