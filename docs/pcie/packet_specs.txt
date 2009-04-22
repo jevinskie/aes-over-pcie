@@ -1,0 +1,87 @@
+General packet settings: 
+TC => Best Effort Service class ('000')
+Attr => default ordering, no snoop ('00')
+EP => assume no poisioning ('0')
+TD => no digest ('0')
+Length of payload packets => 4 DW's
+Requester ID => Bus Number(8) = 0, Device Number(5) = 0, 
+		Function Number(3) = packet spec
+		Tag = doesnt matter for posted requests (MWr)
+ByteEnables => 1 if DW can be read/write, 0 if not
+
+Device number for bridge = 1, for external IC = 0
+
+General address rules:
+Key addr => 1000h
+Plaintext addr => 2000h
+Ciphertext addr => 3000h
+------------------------------------------------------------------
+Memory Write Packet (MWr) TLP:
+Request only, doesn't need completion (can ignore Tag)
+Byte 0-3: R-Frmt(2)-Type(5)-R-TC(3)-R(4)-TD-EP-Attr(2)-R(2)-Length(10)
+Byte 4-7: RequesterID(16)-Tag(8)-LastBE(4)-FirstBE(4)
+Byte 8-11: Addr(30)-R(2)
+Byte 12-27: 128bit data payload (key or plaintext)
+
+Sample MWr format:
+01000000|00000000|00000000|00000100
+00000000|00000000|00000000|11111111	--MWr will be function '000'
+AAAAAAAA|AAAAAAAA|AAAAAAAA|AAAAAA00     --A bits are address bits
+PPPPPPPP|PPPPPPPP|PPPPPPPP|PPPPPPPP     --P bits are payload data
+PPPPPPPP|PPPPPPPP|PPPPPPPP|PPPPPPPP     
+PPPPPPPP|PPPPPPPP|PPPPPPPP|PPPPPPPP     
+PPPPPPPP|PPPPPPPP|PPPPPPPP|PPPPPPPP     
+
+-------------------------------------------------------------------
+Memory Read Packet (MRd) TLP:
+Request and requires a completion (CplD WITH MATCHING TAG required!)
+
+Byte 0-3: R-Frmt(2)-Type(5)-R-TC(3)-R(4)-TD-EP-Attr(2)-R(2)-Length(10)
+Byte 4-7: RequesterID(16)-Tag(8)-LastBE(4)-FirstBE(4)
+Byte 8-11: Addr(30)-R(2)
+No payload in this packet, length needs to be 16 DW to indicate that is how muchwe want to read
+
+Sample MRd format:
+00000000|00000000|00000000|00000100
+00000000|00000001|TTTTTTTT|11111111	--MRd will be function '001' 
+AAAAAAAA|AAAAAAAA|AAAAAAAA|AAAAAA00	--T bits are unique R/C tag 
+					--A bits are address bits
+
+-------------------------------------------------------------------
+Completion with Data (CplD) TLP:
+Completion to satisfy memory read request (must have matching tag/function)
+
+Byte 0-3: R-Frmt(2)-Type(5)-R-TC(3)-R(4)-TD-EP-Attr(2)-R(2)-Length(10)
+Byte 4-7: CompleterID(16)-Status(3)-BCM(1)-ByteCount(12)
+Byte 8-11: RequesterID(16)-Tag(8)-R-LowerAddr(7)
+Byte 12-27: 128bit data payload (ciphertext)
+Set byte count = 16, why we stopped using DW all of the sudden is a mystery
+
+00001010|00000000|00000000|00000100
+00000000|00010001|S0000000|00010000
+00000000|00000001|TTTTTTTT|0AAAAAAA	--T bits are unique R/C tag
+PPPPPPPP|PPPPPPPP|PPPPPPPP|PPPPPPPP	--A bits are lower byte of read addr
+PPPPPPPP|PPPPPPPP|PPPPPPPP|PPPPPPPP	--P bits are payload data
+PPPPPPPP|PPPPPPPP|PPPPPPPP|PPPPPPPP
+PPPPPPPP|PPPPPPPP|PPPPPPPP|PPPPPPPP
+
+
+
+Data Link Packets general format:
+Bytes 0-3: Type(8)-Reserved(12)-AckNakSeqNumber(12)
+Bytes 4-7: CRC(16)-Reserved(4)-TLPSeqNumber(12)
+Bytes 8-N: TLP Header-Payload-Digest
+Last 4 Bytes: LCRC
+CRC - pcie11.pdf pg 140
+LCRC - pcie11.pdf pg 144-145
+
+DDDDDDDD|00000000|0000SSSS|SSSSSSSS	--D is DLLP type ('00000000' for ack)
+CCCCCCCC|CCCCCCCC|0000TTTT|TTTTTTTT	--S is AckNakSeq, C is CRC, T is TLPSeq
+........|........|........|........	--TLP packet stuff
+........|........|........|........
+........|........|........|........
+LLLLLLLL|LLLLLLLL|LLLLLLLL|LLLLLLLL	--L bits are LCRC stuff
+
+Transmitter must calculater LCRC, Receiver must verify it
+TLPSeqNumber increments with each TLP sent (I think...)
+AckNakSeqNumber and TLPSeqNumber should match? pg 152
