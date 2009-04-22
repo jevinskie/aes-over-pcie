@@ -1,7 +1,8 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {aes.vhd}
-analyze -format vhdl -lib WORK {aes_rcu.vhd}
-elaborate aes_rcu -arch "behavioral" -lib WORK -update
+analyze -format vhdl -lib WORK {aes.vhd reduce_pack.vhd}
+analyze -format vhdl -lib WORK {sbox.vhd mix_columns.vhd state_filter_in.vhd state_filter_out.vhd shift_rows.vhd key_scheduler.vhd aes_rcu.vhd add_round_key.vhd state.vhd}
+analyze -format vhdl -lib WORK {aes_top.vhd}
+elaborate aes_top -arch "structural" -lib WORK -update
 
 # Step 2: Set design constraints
 # Uncomment below to set timing, area, power, etc. constraints
@@ -10,14 +11,25 @@ elaborate aes_rcu -arch "behavioral" -lib WORK -update
 # set_max_total_power <power> mW
 create_clock clk -name clk -period 4
 
+#current_design .
+
+#ungroup -flatten -all
+#set_flatten true -effort high
+#uniquify
+
+set compile_auto_ungroup_delay_num_cells 1
+
 # Step 3: Compile the design
-compile -map_effort medium
+#compile -map_effort medium
+compile_ultra
+
+compile_ultra
 
 # Step 4: Output reports
 current_design .
 report_timing -path full -delay max -max_paths 1 -nworst 1 > reports/$current_design.rep
-report_area >> reports/$current_design.rep
-report_power >> reports/$current_design.rep
+report_area -hierarchy >> reports/$current_design.rep
+report_power -hier >> reports/$current_design.rep
 
 # Step 5: Output final VHDL and Verilog files
 set vhdlout_architecture_name "%a"

@@ -14,8 +14,13 @@ use ieee.numeric_std.all;
 entity aes_top is
    
    port (
-      clk   : in std_logic;
-      nrst  : in std_logic
+      clk      : in std_logic;
+      nrst     : in std_logic;
+      rx_data  : in byte;
+      got_key  : in std_logic;
+      got_pt   : in std_logic;
+      aes_done : out std_logic;
+      ct       : out state_type
    );
    
 end entity aes_top;
@@ -30,16 +35,16 @@ architecture structural of aes_top is
    signal filtered            : slice;
    signal round_num           : round_type;
 	signal round_key				: key_type;
-	signal enc_key					: key_type;
    signal sub_bytes_out       : byte;
    signal shift_rows_out      : row;
    signal mix_columns_out     : col;
    signal add_round_key_out   : byte;
-   signal load_out            : byte;
    signal filtered_key        : byte;
    signal start_key           : std_logic;
    signal key_done            : std_logic;
-   signal sbox_lookup         : byte;
+   signal ks_sbox_lookup      : byte;
+   signal key_load            : std_logic;
+   signal ks_sbox_return      : byte;
    
 begin
    
@@ -56,7 +61,7 @@ begin
    state_filter_out_b : entity work.state_filter_out(mux) port map (
       current_state => state_q, sub_bytes_out => sub_bytes_out,
       shift_rows_out => shift_rows_out, mix_columns_out => mix_columns_out,
-      add_round_key_out => add_round_key_out, load_out => load_out,
+      add_round_key_out => add_round_key_out, load_out => rx_data,
       subblock => subblock, i => i, next_state => state_d
 	);
    
@@ -64,6 +69,7 @@ begin
       clk => clk, a => filtered(0), b => sub_bytes_out
    );
    
+   num_shifts <= i mod 4;
    shift_rows_b : entity work.shift_rows(dataflow) port map (
       data_in => filtered, num_shifts => num_shifts,
       data_out => shift_rows_out
@@ -78,18 +84,25 @@ begin
       data_out => add_round_key_out
    );
    
-   aes_rcu_b : entity work.aes_rcu(Behavioral) port map (
+   aes_rcu_b : entity work.aes_rcu(behavioral) port map (
       clk => clk, nrst => nrst, p => i, subblock => subblock,
       current_round => round_num, start_key => start_key,
-      key_done => key_done
+      key_done => key_done, key_load => key_load,
+      got_key => got_key, got_pt => got_pt, aes_done => aes_done
    );
    
    key_scheduler_b : entity work.key_scheduler(behavioral) port map (
-      clk => clk, nrst => nrst, sbox_lookup => sbox_lookup,
-      sbox_return => sub_bytes_out, round => round_num,
-      encryption_key => enc_key, round_key => round_key,
-      go => start_key, done => key_done
+      clk => clk, nrst => nrst, sbox_lookup => ks_sbox_lookup,
+      sbox_return => ks_sbox_return, round => round_num,
+      round_key => round_key, go => start_key, done => key_done,
+      key_data => rx_data, key_index => i, key_load => key_load
    );
+   
+   ks_sbox_b : entity work.sbox(dataflow) port map (
+      clk => clk, a => ks_sbox_lookup, b => ks_sbox_return
+   );
+   
+   ct <= state_q;
    
 end architecture structural;
 

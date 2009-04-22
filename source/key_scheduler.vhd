@@ -21,7 +21,9 @@ entity key_scheduler is
       nrst           : in std_logic;
       go             : in std_logic;
       round          : in round_type;
-      encryption_key : in key_type;
+      key_data       : in byte;
+      key_index      : in g_index;
+      key_load       : in std_logic;
       sbox_return    : in byte;
       sbox_lookup    : out byte;
       round_key      : out key_type; 
@@ -115,7 +117,9 @@ begin
       end case;
    end process state_nsl;
    
-   state_out : process(state, cur_key, new_key, encryption_key,
+   
+   state_out : process(state, cur_key, new_key, key_data,
+      key_index, key_load,
       sbox_return_reged, c, r, round)
       variable temp_index : index;
    begin
@@ -128,14 +132,17 @@ begin
       sbox_lookup <= (others => '-');
       case state is
          when idle =>
-            -- nothing
+            if (key_load = '1') then
+               next_new_key(key_index mod 4, key_index / 4) <= key_data;
+            end if;
          when load_key =>
-            next_new_key <= encryption_key;
+            -- nothing
          when rotate =>
             r_clr <= '1';
+            c_clr <= '1';
             sbox_lookup <= cur_key(1, 3);
             for i in index loop
-               next_new_key(i, 0) <= cur_key(to_integer(to_unsigned(i, 2)+1), 3);
+               next_new_key(i, 0) <= cur_key(to_integer(to_unsigned(i, 2) + 1), 3);
             end loop;
          when sub_bytes =>
             sbox_lookup <= new_key(to_integer(to_unsigned(r, 2) + 1), 0);
@@ -211,3 +218,4 @@ begin
    round_key <= cur_key;
    
 end behavioral;
+

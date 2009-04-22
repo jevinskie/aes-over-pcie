@@ -1,0 +1,3 @@
+#!/bin/csh -f
+dc_shell-t -f ./scripts/fifo.fcr | tee fifo.log
+sed -i -f ./utils/fix_mapped_multidim.sed mapped/fifo.vhd

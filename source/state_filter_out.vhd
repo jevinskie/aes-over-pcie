@@ -42,7 +42,7 @@ begin
                   next_state(x, y) <= current_state(x, y);
                when sub_bytes =>
                   -- dont select the indexed byte
-                  if (x * 4 + y /= i) then
+                  if (x + y * 4 /= i) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
@@ -56,25 +56,28 @@ begin
                   end if;
                when mix_columns =>
                   -- dont select the indexed column
-                  if (y /= i mod 4) then
+                  if (y /= to_integer(to_unsigned(i, 2))) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
                when add_round_key =>
                   -- dont select the indexed byte
-                  if (x * 4 + y /= i) then
+                  if (x + y * 4 /= i) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
-               when load =>
+               when load_pt =>
                   -- dont select the indexed byte
-                  if (x * 4 + y /= i) then
+                  if (x + y * 4 /= i) then
                      next_state(x, y) <= current_state(x, y);
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
+               when key_scheduler =>
+                  -- select all the current bytes
+                  next_state(x, y) <= current_state(x, y);
                when others =>
                   next_state(x, y) <= (others => 'Z');
             end case;
@@ -90,7 +93,7 @@ begin
             case subblock is
                when sub_bytes =>
                   -- select just the indexed byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= sub_bytes_out;
                   else
                      next_state(x, y) <= (others => 'Z');
@@ -150,7 +153,7 @@ begin
             case subblock is
                when add_round_key =>
                   -- select just the indexed byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= add_round_key_out;
                   else
                      next_state(x, y) <= (others => 'Z');
@@ -163,14 +166,14 @@ begin
    end process add_round_key_proc;
    
    
-   load_proc : process(subblock, i, current_state, load_out)
+   load_pt_proc : process(subblock, i, current_state, load_out)
    begin
       for x in index loop
          for y in index loop
             case subblock is
-               when load =>
+               when load_pt =>
                   -- select just the indexed byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= load_out;
                   else
                      next_state(x, y) <= (others => 'Z');
@@ -180,7 +183,7 @@ begin
             end case;
          end loop;
       end loop;
-   end process load_proc;
+   end process load_pt_proc;
    
 end architecture tristate;
 
@@ -202,7 +205,7 @@ begin
                   -- select all the current bytes (already done)
                when sub_bytes =>
                   -- select just the indexed byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= sub_bytes_out;
                   end if;
                when shift_rows =>
@@ -217,16 +220,18 @@ begin
                   end if;
                when add_round_key =>
                   -- select just the index byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= add_round_key_out;
                   end if;
-               when load =>
+               when load_pt =>
                   -- select just the index byte
-                  if (x * 4 + y = i) then
+                  if (x + y * 4 = i) then
                      next_state(x, y) <= load_out;
                   end if;
+               when key_scheduler =>
+                  -- select all the current bytes (already done)
                when others =>
-                  next_state(x, y) <= current_state(x, y);
+                  -- select all the current bytes (already done)
             end case;
          end loop;
       end loop;

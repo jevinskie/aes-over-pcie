@@ -11,6 +11,7 @@ ENTITIES =	add_round_key		\
 				aes_rcu				\
 				aes_top				\
 				aes					\
+            fifo              \
 				key_scheduler		\
 				mix_columns			\
 				reduce_pack			\
@@ -19,18 +20,19 @@ ENTITIES =	add_round_key		\
 				state_filter_in	\
 				state_filter_out	\
 				state					\
-				top_top
+#				top_top
 
 TEST_ENTITIES =	aes_textio           \
+                  aes_top              \
                   numeric_std_textio   \
                   tb_add_round_key	   \
-						tb_aes_rcu			   \
+                  tb_fifo              \
 						tb_key_scheduler	   \
 						tb_mix_columns		   \
 						tb_sbox				   \
 						tb_shift_rows
 
-TEST_VECTORS =    tb_key_scheduler
+TEST_VECTORS =    tb_key_scheduler tb_mix_columns tb_shift_rows tb_aes_top
 
 ENTITY_DIRS = $(foreach ent,$(ENTITIES),$(WORKDIR)/$(ent))
 TEST_ENTITY_DIRS = $(foreach test,$(TEST_ENTITIES),$(WORKDIR)/$(test))
@@ -54,6 +56,7 @@ aes_rcu: aes
 aes_top: aes add_round_key aes_rcu key_scheduler	\
 	mix_columns sbox shift_rows state_filter_in		\
 	state_filter_out state
+fifo: aes
 key_scheduler: aes
 mix_columns: aes
 sbox: aes reduce_pack
@@ -63,10 +66,12 @@ state_filter_out: aes
 state: aes
 
 tb_add_round_key: aes
+tb_fifo: aes
 tb_mix_columns: aes
 tb_sbox: aes
 tb_shift_rows: aes
 tb_aes_rcu: aes
+tb_aes_top: aes
 tb_key_scheduler: aes aes_textio
 aes_textio: aes numeric_std_textio
 

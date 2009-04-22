@@ -33,7 +33,9 @@ architecture test of tb_key_scheduler is
    signal sbox_lookup      : byte;
    signal sbox_return      : byte;
    signal round            : round_type;
-   signal encryption_key   : key_type;
+   signal key_data         : byte;
+   signal key_load         : std_logic;
+   signal key_index        : g_index;
    signal round_key        : key_type;
    signal go               : std_logic := '0';
    signal done             : std_logic;
@@ -47,7 +49,8 @@ begin
    dut : entity work.key_scheduler(behavioral) port map (
       clk => clk, nrst => nrst, sbox_lookup => sbox_lookup,
       sbox_return => sbox_return, round => round,
-      encryption_key => encryption_key, round_key => round_key,
+      round_key => round_key, key_data => key_data,
+      key_load => key_load, key_index => key_index,
       go => go, done => done
    );
    
@@ -81,7 +84,14 @@ begin
    while not endfile(data) loop
       readline(data, sample);
       hread(sample, gold_encryption_key);
-      encryption_key <= gold_encryption_key;
+      key_load <= '1';
+      for i in g_index loop
+         key_data <= gold_encryption_key(i mod 4, i / 4);
+         key_index <= i;
+         wait for clk_per;
+      end loop;
+      key_load <= '0';
+      wait for clk_per;
       for i in 0 to 10 loop
          go <= '1';
          round <= i;

@@ -4,35 +4,34 @@ import random
 import aes
 
 
-def gen_rand_key():
+def gen_rand_block():
    return   [
                [random.randint(0, 255) for j in range(0, 4)]
                for i in range(0, 4)
             ]
+               
 
 
-def print_key_schedule(aes, key):
-   print "%s " % aes.hex_to_str(key),
-   for i in range(0, 11):
-      round_key = e.keysched(key, i)
-      print "%s " % aes.hex_to_str(round_key),
+def print_block(aes, block):
+   print "%s " % aes.hex_to_str(block),
+   x = e.shiftrows(block)
+   print "%s " % aes.hex_to_str(x),
    print
 
 e = aes.aes()
 
 zeros = [[0 for j in range(0, 4)] for i in range(0, 4)]
-print_key_schedule(e, zeros)
+print_block(e, zeros)
 
 ones = [[0xFF for j in range(0, 4)] for i in range(0, 4)]
-print_key_schedule(e, ones)
+print_block(e, ones)
 
 increasing = [[4*j+i for j in range(0, 4)] for i in range(0, 4)]
-print_key_schedule(e, increasing)
+print_block(e, increasing)
 
 
-total = 10
+total = 1024
 
 for i in range(0, total):
-   key = gen_rand_key()
-   print_key_schedule(e, key)
-
+   key = gen_rand_block()
+   print_block(e, key)
