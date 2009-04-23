@@ -19,6 +19,7 @@ entity aes_rcu is
       key_done       : in std_logic;
       got_key        : in std_logic;
       got_pt         : in std_logic;
+      send_ct        : in std_logic;
       p              : out g_index;
       subblock       : out subblock_type;
       current_round  : out round_type;
@@ -36,7 +37,7 @@ architecture behavioral of aes_rcu is
       idle, e_idle, load_pt, load_key, sub_bytes,
       mix_columns, shift_rows, add_round_key,
       key_scheduler_start, key_scheduler_wait,
-      round_start, round_end, block_done
+      round_start, round_end, block_done, store_ct
    );
    
    signal state, next_state               : state_type;
@@ -65,6 +66,8 @@ begin
                next_state <= load_key;
             elsif (got_pt = '1') then
                next_state <= load_pt;
+            elsif (send_ct = '1') then
+               next_state <= store_ct;
             else
                next_state <= idle;
             end if;
@@ -81,6 +84,12 @@ begin
                next_state <= load_pt;
             else
                next_state <= round_start;
+            end if;
+         when store_ct =>
+            if (i /= 15) then
+               next_state <= store_ct;
+            else
+               next_state <= idle;
             end if;
          when round_start =>
             next_state <= key_scheduler_start;
@@ -160,6 +169,9 @@ begin
          when load_pt =>
             subblock <= load_pt;
             i_up <= '1';
+         when store_ct =>
+            subblock <= store_ct;
+            i_up <= '1';
          when sub_bytes =>
             subblock <= sub_bytes;
             i_up <= '1';
@@ -179,10 +191,10 @@ begin
             subblock <= add_round_key;
             i_up <= '1';
          when key_scheduler_start =>
-            subblock <= key_scheduler;
+            subblock <= identity;
             start_key <= '1';
          when key_scheduler_wait =>
-            subblock <= key_scheduler;
+            subblock <= identity;
          when round_start =>
             subblock <= identity;
          when round_end =>

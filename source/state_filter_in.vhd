@@ -62,9 +62,9 @@ begin
          when add_round_key =>
             -- output the indexed byte
             d_out(0) <= s(r, c);
-            --filtered_key <= round_key(r, c);
-         when key_scheduler =>
-            --d_out(0) <= ks_sbox_lookup;
+            filtered_key <= round_key(r, c);
+         when store_ct =>
+            d_out(0) <= s(r, c);
          when others =>
             -- dont care - already done at the top
       end case;

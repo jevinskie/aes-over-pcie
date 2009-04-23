@@ -1,7 +1,8 @@
 # Step 1:  Read in the source file
-analyze -format vhdl -lib WORK {aes.vhd reduce_pack.vhd}
+analyze -format vhdl -lib WORK {aes.vhd reduce_pack.vhd pcie.vhd}
 analyze -format vhdl -lib WORK {sbox.vhd mix_columns.vhd state_filter_in.vhd state_filter_out.vhd shift_rows.vhd key_scheduler.vhd aes_rcu.vhd add_round_key.vhd state.vhd}
 analyze -format vhdl -lib WORK {aes_top.vhd}
+analyze -format vhdl -lib WORK {pcie_top.vhd}
 analyze -format vhdl -lib WORK {top_top.vhd}
 elaborate top_top -arch "structural" -lib WORK -update
 
@@ -10,7 +11,7 @@ elaborate top_top -arch "structural" -lib WORK -update
 # set_max_delay <delay> -from "<input>" -to "<output>"
 # set_max_area <area>
 # set_max_total_power <power> mW
-create_clock clk -name clk -period 4
+create_clock clk -name clk -period 10
 
 #current_design .
 

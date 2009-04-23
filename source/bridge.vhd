@@ -63,6 +63,88 @@ architecture behavioral of bridge is
            end if;
     end process SeqNum;
     
+   rcu_nsl : process(state)
+   begin
+      case state is
+         when idle =>
+            next_state <= read_dllp_type;
+         when read_dllp_type =>
+            next_state <= read_dummy_1;
+         when read_dummy_1 =>
+            next_state <= read_dllp_seq_num_hi;
+         when read_dllp_seq_num_hi =>
+            next_state <= read_dllp_seq_num_lo;
+         when read_dllp_seq_num_lo =>
+            next_state <= read_crc_hi;
+         when read_crc_hi =>
+            next_state <= read_crc_lo;
+         when read_crc_lo =>
+            -- done reading dllp, going to lp
+            next_state <= read_tlp_seq_num_hi;
+         when read_tlp_seq_num_hi =>
+            next_state <= read_tlp_seq_num_lo;
+         when read_tlp_seq_num_lo =>
+            -- done reading lp, going to tlp
+            next_state <= read_tlp_type;
+         when read_tlp_type =>
+            next_state <= read_dummy_2;
+         when read_dummy_2 =>
+            next_state <= read_length_hi;
+         when read_length_hi =>
+            next_state <= read_length_lo;
+         when read_length_lo =>
+            next_state <= read_reqester_id_hi;
+         when read_requester_id_hi =>
+            next_state <= read_requestor_id_lo;
+         when read_requestor_id_lo =>
+            next_state <= read_tag;
+         when read_tag =>
+            next_state <= read_byte_enables;
+         when read_byte_enables =>
+            next_state <= read_addr_hi_hi;
+         when read_addr_hi_hi =>
+            next_state <= read_addr_hi_lo;
+         when read_addr_hi_lo =>
+            next_state <= read_addr_lo_hi;
+         when read_addr_lo_hi =>
+            next_state <= read_addr_lo_lo;
+         when read_addr_lo_lo =>
+            if (addr = x"00001000") then
+               next_state <= load_key;
+            elsif (addr = x"00002000") then
+               next_state <= load_pt;
+            elsif (addr = x"00003000") then
+               next_state <= store_ct;
+            else
+               next_state <= e_idle;
+            end if;
+         when load_key =>
+            if (i /= 15) then
+               next_state <= load_key;
+            else
+               next_state <= read_lcrc_hi_hi;
+            end if;
+         when load_pt =>
+            if (i /= 15) then
+               next_state <= load_pt;
+            else
+               next_state <= read_lcrc_hi_hi;
+            end if;
+         when store_ct =>
+            next_state <= read_lcrc_hi_hi;
+         when read_lcrc_hi_hi =>
+            next_state <= read_lcrc_hi_lo;
+         when read_lcrc_hi_lo =>
+            next_state <= read_lcrc_lo_hi;
+         when read_lcrc_lo_hi =>
+            next_state <= read_lcrc_lo_lo;
+         when read_lcrc_lo_lo =>
+            next_state <= check_lcrc;
+         when others =>
+            next_state => e_idle;
+      end case;
+   end process bridge_nsl;
+    
     Next_state: process (state)
           begin
           case state is

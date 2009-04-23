@@ -75,7 +75,7 @@ begin
                   else
                      next_state(x, y) <= (others => 'Z');
                   end if;
-               when key_scheduler =>
+               when store_ct =>
                   -- select all the current bytes
                   next_state(x, y) <= current_state(x, y);
                when others =>
@@ -228,7 +228,7 @@ begin
                   if (x + y * 4 = i) then
                      next_state(x, y) <= load_out;
                   end if;
-               when key_scheduler =>
+               when store_ct =>
                   -- select all the current bytes (already done)
                when others =>
                   -- select all the current bytes (already done)

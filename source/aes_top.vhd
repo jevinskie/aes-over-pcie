@@ -19,8 +19,9 @@ entity aes_top is
       rx_data  : in byte;
       got_key  : in std_logic;
       got_pt   : in std_logic;
+      send_ct  : in std_logic;
       aes_done : out std_logic;
-      ct       : out state_type
+      tx_data  : out byte
    );
    
 end entity aes_top;
@@ -88,7 +89,8 @@ begin
       clk => clk, nrst => nrst, p => i, subblock => subblock,
       current_round => round_num, start_key => start_key,
       key_done => key_done, key_load => key_load,
-      got_key => got_key, got_pt => got_pt, aes_done => aes_done
+      got_key => got_key, got_pt => got_pt, aes_done => aes_done,
+      send_ct => send_ct
    );
    
    key_scheduler_b : entity work.key_scheduler(behavioral) port map (
@@ -102,7 +104,7 @@ begin
       clk => clk, a => ks_sbox_lookup, b => ks_sbox_return
    );
    
-   ct <= state_q;
+   tx_data <= filtered(0);
    
 end architecture structural;
 

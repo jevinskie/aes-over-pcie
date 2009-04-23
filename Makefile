@@ -15,12 +15,14 @@ ENTITIES =	add_round_key		\
 				key_scheduler		\
 				mix_columns			\
 				reduce_pack			\
+				pcie					\
+				pcie_top				\
 				sbox					\
 				shift_rows			\
 				state_filter_in	\
 				state_filter_out	\
 				state					\
-#				top_top
+				top_top
 
 TEST_ENTITIES =	aes_textio           \
                   aes_top              \
