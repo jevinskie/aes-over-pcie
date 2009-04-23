@@ -27,32 +27,24 @@ architecture behavioral of bridge is
     signal ptype: unsigned(4 downto 0);
     signal paddr: unsigned(6 downto 0);
     signal ackseq: unsigned(11 downto 0);
-    signal state, nextstate: state_type;
+    signal state, next_state: state_type;
     subtype l_index is integer range 0 to 15;
     signal readcount, nextreadcount: l_index;
     signal seqnum, nextseqnum: sequence_number_type;
     signal crc, nextcrc:word
-       
-    Begin
-    StateReg: process (clk, nrst)
+
+begin
+   
+   state_reg : process (clk, nrst)
        begin
            -- on reset, the RCU goes to the IDLE state, otherwise it goes
            -- to the next state.
            if (nrst = '0') then
                state <= IDLE;
            elsif (rising_edge(clk)) then
-               state <= nextstate;
+               state <= next_state;
            end if;
-    end process StateReg;
-    
-    ReadCounter: process(clk, nrst)
-       begin
-           if (nrst = '0') then
-               readcount <= 0;
-           elsif (rising_edge(clk)) then
-               readcount <= nextreadcount;
-           end if;
-       end process ReadCounter;
+    end process state_reg;
     
     SeqNum: process(clk, nrst)
     begin
@@ -139,92 +131,70 @@ architecture behavioral of bridge is
          when read_lcrc_lo_hi =>
             next_state <= read_lcrc_lo_lo;
          when read_lcrc_lo_lo =>
-            next_state <= check_lcrc;
+            next_state <= send_dllp_type;
+         when send_dllp_type =>
+            -- sends ack or nak
+            next_state <= send_dummy_1;
+         when send_dummy_1 =>
+            next_state <= send_dllp_seq_num_hi;
+         when send_dllp_seq_num_hi =>
+            next_state <= send_dllp_seq_num_lo;
+         when send_dllp_seq_num_lo =>
+            next_state <= send_crc_hi;
+         when send_crc_hi =>
+            next_state <= send_crc_lo;
+         when send_crc_lo =>
+            -- either go to idle after an ack/nak or send the ct
+            next_state <= idle;
+         when send_tlp_seq_num_hi =>
+            next_state <= send_tlp_seq_num_lo;
+         when send_tlp_seq_num_lo =>
+            next_state <= send_tlp_type;
+         when send_tlp_type =>
+            next_state <= send_dummy_2;
+         when send_dummy_2 =>
+            next_state <= send_tlp_length_hi;
+         when send_tlp_length_lo =>
+            next_state <= send_completer_id_hi;
+         when send_completer_id_hi =>
+            next_state <= send_completer_id_lo;
+         when send_completer_id_lo =>
+            next_state <= send_byte_count_hi;
+         when send_byte_count_hi =>
+            next_state <= send_byte_count_lo;
+         when send_byte_count_lo =>
+            next_state <= send_requester_id_hi;
+         when send_requester_id_hi =>
+            next_state <= send_requester_id_lo;
+         when send_requester_id_lo =>
+            next_state <= send_tag;
+         when send_tag =>
+            next_state <= send_addr_lo_lo;
+         when send_addr_lo_lo =>
+            next_state <= send_ct;
+         when send_ct =>
+            if (i /= 15) then
+               next_state <= send_ct;
+            else
+               next_state <= send_lcrc_hi_hi;
+            end if;
+         when send_lcrc_hi_hi =>
+            next_state <= send_lcrc_hi_lo;
+         when send_lcrc_hi_lo =>
+            next_state <= send_lcrc_lo_hi;
+         when send_lcrc_lo_hi =>
+            next_state <= send_lcrc_lo_lo;
+         when send_lcrc_lo_lo =>
+            next_state <= idle;
          when others =>
             next_state => e_idle;
       end case;
    end process bridge_nsl;
-    
-    Next_state: process (state)
-          begin
-          case state is
-             when IDLE =>
-                 --add start condition
-                 nextstate <= READ_DLLP_TYPE;
-                 nextreadCount <= 0;
-             when READ_DLLP_TYPE =>
-                 nextstate <= READ_ACK_SEQ_NUM;
-                 nextreadcount <= 0;
-             when READ_ACK_SEQ_NUM =>
-                 if (readcount < 2) then
-                    nextstate <= READ_ACK_SEQ_NUM;
-                    nextseqnum <= seqnum;
-                    nextreadcount <= readcount + 1;
-                 else
-                    nextstate <= READ_CRC;
-                    nextseqnum <= incoming_data;
-                    nextreadcount <= 0; 
-                 end if;
-             when READ_CRC =>
-                 
-             when READ_HEADER =>
-                 --read from stream_in to determine packet type and length
-                 if (readcount < 4) then
-                     nextstate <= READ_HEADER;
-                     if (readcount = 0) then
-                         pformat <= fifo_in(6 downto 5);
-                         ptype <= fifo_in(4 downto 0);
-                     end if;
-                     nextreadcount <= readcount + 1;
-                 else
-                     nextstate <= READ_ADDR;
-                     nextreadcount <= 0;
-                 end if;
-             when READ_ADDR =>
-                 --read 32bit addr to determine where to write
-                 if (readcount < 4) then
-                     nextstate <= READ_ADDR;
-                     --lets leave first 3 addr bytes empty
-                     if (readcount = 4) then
-                         paddr <= fifo_in(7 downto 1);
-                     end if;
-                     nextreadcount <= readcount + 1;
-                 else
-                     --if has payload
-                     if (pformat = "00" and ptype = "00000") then
-                         currentpacket <= MRD;
-                         nextstate <= AES_CTRL;
-                         nextreadcount <= 0;
-                     elsif (pformat = "10" and ptype = "00000") then 
-                         currentpacket <= MWR;
-                         nextstate <= READ_PAYLOAD;
-                         nextreadcount <= 0;
-                     else
-                         nextstate <= ERROR;
-                         nextreadcount <= 0;
-                         currentpacket <= MAL;
-                     end if;
-                 end if;
-             when READ_PAYLOAD =>
-                 --read in 128 bit block
-                 if (readcount < 16) then
-                     nextstate <= READ_PAYLOAD;
-                     to_aes <= fifo_in;
-                     nextreadcount <= readcount + 1;
-                 else
-                     nextstate <= AES_CTRL;
-                     nextreadcount <= 0;
-                 end if;
-             when AES_CTRL =>
-                 --send appropriate ctrl signals to aes_rcu
-                 nextstate <= IDLE;
-             when ERR =>
-                 --possible error conditions: bad addr, length mismatch, incomplete data, malformed packet
-                 nextstate <= ERROR;
-             
-             when others =>       
-                 nextstate <= IDLE;
-             end case;
-    end process Next_state;
-                   
-end architecture Behavioral;
+   
+   bridge_output : process(state)
+   begin
+      
+   end process bridge_output;
+   
+end architecture behavioral;
+
