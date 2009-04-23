@@ -14,6 +14,10 @@ package pcie is
    
    attribute enum_encoding: STRING;
    
+   subtype word is unsigned(15 downto 0);
+
+   subtype sequence_number_type is unsigned(11 downto 0);
+   
    type rx_status_type is (
       rx_data_ok, skp_add, skp_rem, rx_detect, eight_ten_error,
       elastic_buf_over, elastic_buf_under, rx_disparity_error

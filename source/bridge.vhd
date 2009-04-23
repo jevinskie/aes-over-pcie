@@ -8,25 +8,30 @@ entity bridge is
    port(
        clk : in std_logic;
        nrst : in std_logic;
-       fifo_in : in byte;
-       fifo_out : out byte;
+       incoming_data : in byte;
+       outgoing_data : out byte;
        to_aes: out byte;
        from_aes: in byte;
-       crtl : out std_logic --change this later      
+       crtl : out std_logic --change this later 
+       got_key : out std_logic;
+       got_pt : out std_logic;
+       send_ct: out std_logic     
        );
 end entity bridge;
 
 architecture behavioral of bridge is
-    type state_type is (IDLE, READ_HEADER, READ_ADDR, READ_PAYLOAD, AES_CTRL, ERROR);
+    type state_type is (IDLE, READ_HEADER, READ_ADDR, READ_PAYLOAD, AES_CTRL, ERR);
     type packet_type is (MWR, MRD, CPLD, MAL);
     signal currentpacket: packet_type;
     signal pformat: unsigned(1 downto 0);
     signal ptype: unsigned(4 downto 0);
     signal paddr: unsigned(6 downto 0);
+    signal ackseq: unsigned(11 downto 0);
     signal state, nextstate: state_type;
     subtype l_index is integer range 0 to 15;
     signal readcount, nextreadcount: l_index;
-    
+    signal seqnum, nextseqnum: sequence_number_type;
+    signal crc, nextcrc:word
        
     Begin
     StateReg: process (clk, nrst)
@@ -49,12 +54,37 @@ architecture behavioral of bridge is
            end if;
        end process ReadCounter;
     
+    SeqNum: process(clk, nrst)
+    begin
+           if (nrst = '0') then
+               seqnum <= (others => '0');
+           elsif (rising_edge(clk)) then
+               seqnum <= nextseqnum;
+           end if;
+    end process SeqNum;
+    
     Next_state: process (state)
           begin
           case state is
              when IDLE =>
                  --add start condition
-                 nextstate <= READ_HEADER;
+                 nextstate <= READ_DLLP_TYPE;
+                 nextreadCount <= 0;
+             when READ_DLLP_TYPE =>
+                 nextstate <= READ_ACK_SEQ_NUM;
+                 nextreadcount <= 0;
+             when READ_ACK_SEQ_NUM =>
+                 if (readcount < 2) then
+                    nextstate <= READ_ACK_SEQ_NUM;
+                    nextseqnum <= seqnum;
+                    nextreadcount <= readcount + 1;
+                 else
+                    nextstate <= READ_CRC;
+                    nextseqnum <= incoming_data;
+                    nextreadcount <= 0; 
+                 end if;
+             when READ_CRC =>
+                 
              when READ_HEADER =>
                  --read from stream_in to determine packet type and length
                  if (readcount < 4) then
@@ -106,7 +136,7 @@ architecture behavioral of bridge is
              when AES_CTRL =>
                  --send appropriate ctrl signals to aes_rcu
                  nextstate <= IDLE;
-             when ERROR =>
+             when ERR =>
                  --possible error conditions: bad addr, length mismatch, incomplete data, malformed packet
                  nextstate <= ERROR;
              
