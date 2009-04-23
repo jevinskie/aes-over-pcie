@@ -23,13 +23,18 @@ entity pcie_top is
       rx_elec_idle   : in std_logic;
       phy_status     : in std_logic;
       rx_valid       : in std_logic;
+      tx_data_aes    : in byte;
+      aes_done       : in std_logic;
       tx_detect_rx   : out std_logic;
       tx_elec_idle   : out std_logic;
       tx_comp        : out std_logic;
       rx_pol         : out std_logic;
       power_down     : out power_down_type;
       tx_data        : out byte;
-      tx_data_k      : out std_logic
+      tx_data_k      : out std_logic;
+      got_key        : out std_logic;
+      got_pt         : out std_logic;
+      send_ct        : out std_logic
    );
    
 end entity pcie_top;
@@ -57,6 +62,13 @@ architecture structural of pcie_top is
    
 begin
    
+   bridge_b : entity work.bridge(behavioral) port map (
+      clk => clk, nrst => nrst, rx_data => rx_data,
+      tx_data_aes => tx_data_aes, rx_data_k => rx_data_k,
+      tx_data => tx_data, tx_data_k => tx_data_k,
+      got_key => got_key, got_pt => got_pt, send_ct => send_ct,
+      aes_done => aes_done
+   );
    
-      
 end architecture structural;
+

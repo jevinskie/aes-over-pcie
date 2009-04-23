@@ -11,6 +11,7 @@ ENTITIES =	add_round_key		\
 				aes_rcu				\
 				aes_top				\
 				aes					\
+				bridge				\
             fifo              \
 				key_scheduler		\
 				mix_columns			\
@@ -58,6 +59,7 @@ aes_rcu: aes
 aes_top: aes add_round_key aes_rcu key_scheduler	\
 	mix_columns sbox shift_rows state_filter_in		\
 	state_filter_out state
+bridge: pcie aes
 fifo: aes
 key_scheduler: aes
 mix_columns: aes

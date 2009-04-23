@@ -53,7 +53,9 @@ begin
       rx_valid => rx_valid, tx_detect_rx => tx_detect_rx,
       tx_elec_idle => tx_elec_idle, tx_comp => tx_comp,
       rx_pol => rx_pol, power_down => power_down,
-      tx_data => tx_data, tx_data_k => tx_data_k
+      tx_data => tx_data, tx_data_k => tx_data_k,
+      tx_data_aes => tx_data_aes, aes_done => aes_done,
+      got_key => got_key, got_pt => got_pt, send_ct => send_ct
    );
    
    

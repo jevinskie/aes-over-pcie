@@ -2,6 +2,7 @@
 analyze -format vhdl -lib WORK {aes.vhd reduce_pack.vhd pcie.vhd}
 analyze -format vhdl -lib WORK {sbox.vhd mix_columns.vhd state_filter_in.vhd state_filter_out.vhd shift_rows.vhd key_scheduler.vhd aes_rcu.vhd add_round_key.vhd state.vhd}
 analyze -format vhdl -lib WORK {aes_top.vhd}
+analyze -format vhdl -lib WORK {bridge.vhd}
 analyze -format vhdl -lib WORK {pcie_top.vhd}
 analyze -format vhdl -lib WORK {top_top.vhd}
 elaborate top_top -arch "structural" -lib WORK -update
@@ -20,8 +21,8 @@ create_clock clk -name clk -period 10
 #uniquify
 
 # Step 3: Compile the design
-compile -map_effort medium
-#compile_ultra
+#compile -map_effort medium
+compile_ultra
 
 # Step 4: Output reports
 current_design .

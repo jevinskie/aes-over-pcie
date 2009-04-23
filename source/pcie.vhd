@@ -14,9 +14,9 @@ package pcie is
    
    attribute enum_encoding: STRING;
    
+   subtype dword is unsigned(31 downto 0);
    subtype word is unsigned(15 downto 0);
-
-   subtype sequence_number_type is unsigned(11 downto 0);
+   subtype seq_number_type is unsigned(11 downto 0);
    
    type rx_status_type is (
       rx_data_ok, skp_add, skp_rem, rx_detect, eight_ten_error,
@@ -29,6 +29,9 @@ package pcie is
    attribute enum_encoding of power_down_type : type is
       "00 01 10 11";
    
+   type symbol_type is (idl);
+   attribute enum_encoding of symbol_type : type is
+      "01111100";
    
 end pcie;
 
