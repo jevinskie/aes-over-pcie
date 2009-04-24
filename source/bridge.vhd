@@ -13,7 +13,7 @@ entity bridge is
       tx_data_aes : in byte;
       rx_data_k : in std_logic;
       aes_done : in std_logic;
-      tx_data : out byte;
+      tx_data: out byte;
       tx_data_k : out std_logic;
       got_key : out std_logic;
       got_pt : out std_logic;
@@ -34,15 +34,20 @@ architecture behavioral of bridge is
    signal crc, next_crc : word;
    signal lcrc, next_lcrc : dword;
    signal send_completion, send_completion_clr : std_logic;
-   
+   signal crc_clr, crc_calc : std_logic;
+   signal lcrc_clr, lcrc_calc : std_logic;
+   signal rxing : std_logic;  
+   signal tx_data_int : byte;
+
+
    function crc_gen (
-      data  : unsigned(7 downto 0);
-      crc   : unsigned(15 downto 0)
+      data  : byte;
+      crc   : word
    ) return unsigned is
       
-      variable d        : unsigned(7 downto 0);
-      variable c        : unsigned(15 downto 0);
-      variable newcrc   : unsigned(15 downto 0);
+      variable d        : byte;
+      variable c        : word;
+      variable newcrc   : word;
       
    begin
       
@@ -70,13 +75,13 @@ architecture behavioral of bridge is
    end crc_gen;
    
    function lcrc_gen (
-      data  : unsigned(7 downto 0);
-      crc   : unsigned(31 downto 0)
+      data  : byte;
+      crc   : dword
    ) return unsigned is
       
-      variable d        : unsigned(7 downto 0);
-      variable c        : unsigned(31 downto 0);
-      variable newcrc   : unsigned(31 downto 0);
+      variable d        : byte;
+      variable c        : dword;
+      variable newcrc   : dword;
       
    begin
       
@@ -153,6 +158,37 @@ begin
       end if;
    end process i_nsl;
 
+   crc_nsl: process(crc_clr, crc_calc, crc)
+   begin
+      if (crc_clr = '1') then
+         next_crc <= (others => '1');
+      elsif (crc_calc = '1') then
+         if (rxing = '1') then
+            next_crc <= crc_gen(rx_data, crc);
+         else
+            next_crc <= crc_gen(tx_data_int, crc);
+         end if;
+      else
+         next_crc <= crc;
+      end if;
+   end process crc_nsl;
+
+   lcrc_nsl: process(lcrc_clr, lcrc_calc, lcrc)
+   begin
+      if (lcrc_clr = '1') then
+         next_lcrc <= (others => '1');
+      elsif (lcrc_calc = '1') then
+         if (rxing = '1') then
+            next_lcrc <= lcrc_gen(rx_data, lcrc);
+         else
+            next_lcrc <= lcrc_gen(tx_data_int, lcrc);
+         end if;
+      else
+         next_lcrc <= lcrc;
+      end if;
+   end process lcrc_nsl;
+   
+   
    -- leda C_1406 off
    register_party : process(clk)
    begin
@@ -321,9 +357,9 @@ begin
       end case;
    end process rcu_nsl;
    
-   bridge_output : process(state, addr, rx_data, tx_data_aes, dllp_seq_num, tlp_seq_num, tlp_type, tag, addr, lcrc, crc)
+   bridge_output : process(state, addr, rx_data, tx_data_aes, dllp_seq_num, tlp_seq_num, tlp_type, tag, lcrc, crc)
    begin
-      tx_data <= x"7C"; -- idl
+      tx_data_int<= x"7C"; -- idl
       tx_data_k <= '1'; -- control byte
       got_key <= '0';
       got_pt <= '0';
@@ -385,83 +421,84 @@ begin
          when read_addr_lo_hi =>
             next_addr(15 downto 8) <= rx_data;
          when send_lcrc_hi_hi =>
-            tx_data <= lcrc(31 downto 24);
+            tx_data_int<= lcrc(31 downto 24);
             tx_data_k <= '0';
          when send_lcrc_hi_lo =>
-            tx_data <= lcrc(23 downto 16);
+            tx_data_int<= lcrc(23 downto 16);
             tx_data_k <= '0';
          when send_lcrc_lo_hi =>
-            tx_data <= lcrc(15 downto 8);
+            tx_data_int<= lcrc(15 downto 8);
             tx_data_k <= '0';
          when send_lcrc_lo_lo =>
-            tx_data <= lcrc(7 downto 0);
+            tx_data_int<= lcrc(7 downto 0);
             tx_data_k <= '0';
 	      when send_payload =>
-	         tx_data <= tx_data_aes;
+	         tx_data_int<= tx_data_aes;
 	         tx_data_k <= '0';
 	      when send_tag =>
-	         tx_data <= tag;
+	         tx_data_int<= tag;
 	         tx_data_k <= '0';
 	      when send_dllp_type =>
 	         --send ack or nak depending
-	         tx_data <= "00000000";   --default as ack
+	         tx_data_int<= "00000000";   --default as ack
 	         tx_data_k <= '0';
          when send_dummy_1 =>
-	         tx_data <= "00000000";
+	         tx_data_int<= "00000000";
 	         tx_data_k <= '0';
          when send_dllp_seq_num_hi =>
-	         tx_data <= "0000" & dllp_seq_num(11 downto 8);
+	         tx_data_int<= "0000" & dllp_seq_num(11 downto 8);
 	         tx_data_k <= '0';
          when send_dllp_seq_num_lo =>
-	         tx_data <= dllp_seq_num(7 downto 0);
+	         tx_data_int<= dllp_seq_num(7 downto 0);
 	         tx_data_k <= '0';
          when send_crc_hi =>
-	         tx_data <= crc(15 downto 8);
+	         tx_data_int<= crc(15 downto 8);
 	         tx_data_k <= '0';
          when send_crc_lo =>
-	         tx_data <= crc(7 downto 0);
+	         tx_data_int<= crc(7 downto 0);
 	         tx_data_k <= '0';
          when send_tlp_seq_num_hi =>
-	         tx_data <= "0000" & tlp_seq_num(11 downto 8);
+	         tx_data_int<= "0000" & tlp_seq_num(11 downto 8);
 	         tx_data_k <= '0';
          when send_tlp_seq_num_lo =>
-	         tx_data <= tlp_seq_num(7 downto 0);
+	         tx_data_int<= tlp_seq_num(7 downto 0);
 	         tx_data_k <= '0';
          when send_tlp_type =>
-	         tx_data <= tlp_type;
+	         tx_data_int<= tlp_type;
 	         tx_data_k <= '0';
          when send_dummy_2 =>
-	         tx_data <= "00000000";
+	         tx_data_int<= "00000000";
 	         tx_data_k <= '0';
          when send_tlp_length_hi =>
-	         tx_data <= "00000000";
+	         tx_data_int<= "00000000";
 	         tx_data_k <= '0';
          when send_tlp_length_lo =>
-	         tx_data <= "00000100";
+	         tx_data_int<= "00000100";
 	         tx_data_k <= '0';
          when send_completer_id_hi =>
 	         send_completion_clr <= '1';
-            tx_data <= "00000000";
+            tx_data_int<= "00000000";
 	         tx_data_k <= '0';
          when send_completer_id_lo =>
-	         tx_data <= "00010001";
+	         tx_data_int<= "00010001";
 	         tx_data_k <= '0';
          when send_byte_count_hi => 
-	         tx_data <= "00000000";  ---first 3 bits are status, 000 for success
+	         tx_data_int<= "00000000";  ---first 3 bits are status, 000 for success
 	         tx_data_k <= '0';
          when send_byte_count_lo =>
-	         tx_data <= "00010000";
+	         tx_data_int<= "00010000";
 	         tx_data_k <= '0';
          when send_requester_id_hi =>
-	         tx_data <= "00000000";
+	         tx_data_int<= "00000000";
 	         tx_data_k <= '0';
          when send_requester_id_lo =>
-	         tx_data <= "00000001";
+	         tx_data_int<= "00000001";
 	         tx_data_k <= '0';
          when others =>
             -- get fucked
       end case;
    end process bridge_output;
-   
+
+   tx_data <= tx_data_int;
 end architecture behavioral;
 
