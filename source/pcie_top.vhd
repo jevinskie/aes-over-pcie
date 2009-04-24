@@ -17,24 +17,24 @@ entity pcie_top is
    port (
       clk            : in std_logic;
       nrst           : in std_logic;
-      rx_data        : in byte;
-      rx_data_k      : in std_logic;
-      rx_status      : in rx_status_type;
+      rx_data        : in byte;          --
+      rx_data_k      : in std_logic;   --
+      rx_status      : in rx_status_type;  --
       rx_elec_idle   : in std_logic;
       phy_status     : in std_logic;
-      rx_valid       : in std_logic;
+      rx_valid       : in std_logic;  --
       tx_data_aes    : in byte;
-      aes_done       : in std_logic;
+      aes_done       : in std_logic;    --
       tx_detect_rx   : out std_logic;
       tx_elec_idle   : out std_logic;
       tx_comp        : out std_logic;
       rx_pol         : out std_logic;
       power_down     : out power_down_type;
-      tx_data        : out byte;
-      tx_data_k      : out std_logic;
-      got_key        : out std_logic;
-      got_pt         : out std_logic;
-      send_ct        : out std_logic
+      tx_data        : out byte;       --
+      tx_data_k      : out std_logic; --
+      got_key        : out std_logic; --
+      got_pt         : out std_logic;--
+      send_ct        : out std_logic--
    );
    
 end entity pcie_top;
@@ -62,7 +62,13 @@ architecture structural of pcie_top is
    
 begin
    
-   bridge_b : entity work.bridge(behavioral) port map (
+	tx_elec_idle <= '0';  
+	tx_detect_rx <= '0';
+	tx_comp <= '0';
+	rx_pol <= '0';
+	power_down <= p0; 
+
+	bridge_b : entity work.bridge(behavioral) port map (
       clk => clk, nrst => nrst, rx_data => rx_data,
       tx_data_aes => tx_data_aes, rx_data_k => rx_data_k,
       tx_data => tx_data, tx_data_k => tx_data_k,
