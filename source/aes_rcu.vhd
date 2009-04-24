@@ -57,7 +57,7 @@ begin
       end if;
    end process fsm_reg;
    
-   fsm_nsl : process(state, round_count, i, key_done, got_pt, got_key)
+   fsm_nsl : process(state, round_count, i, key_done, got_pt, got_key, send_ct)
    begin
       next_state <= state;
       case state is

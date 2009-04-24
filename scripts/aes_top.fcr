@@ -9,7 +9,7 @@ elaborate aes_top -arch "structural" -lib WORK -update
 # set_max_delay <delay> -from "<input>" -to "<output>"
 # set_max_area <area>
 # set_max_total_power <power> mW
-create_clock clk -name clk -period 4
+create_clock clk -name clk -period 10
 
 #current_design .
 
