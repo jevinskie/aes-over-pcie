@@ -162,10 +162,10 @@ begin
       end if;
    end process i_nsl;
 
-   crc_nsl: process(crc_clr, crc_calc, our_crc)
+   crc_nsl: process(crc_clr, crc_calc, our_crc, rxing, rx_data, tx_data_int)
    begin
       if (crc_clr = '1') then
-         next_crc <= (others => '1');
+         next_our_crc <= (others => '1');
       elsif (crc_calc = '1') then
          if (rxing = '1') then
             next_our_crc <= crc_gen(rx_data, our_crc);
@@ -177,7 +177,7 @@ begin
       end if;
    end process crc_nsl;
 
-   lcrc_nsl: process(lcrc_clr, lcrc_calc, our_lcrc)
+   lcrc_nsl: process(lcrc_clr, lcrc_calc, our_lcrc, rxing, rx_data, tx_data_int)
    begin
       if (lcrc_clr = '1') then        
          next_our_lcrc <= (others => '1');
@@ -374,7 +374,7 @@ begin
       end case;
    end process rcu_nsl;
    
-   bridge_output : process(state, addr, rx_data, tx_data_aes, dllp_seq_num, tlp_seq_num, tlp_type, tag, lcrc, crc)
+   bridge_output : process(state, addr, rx_data, tx_data_aes, dllp_seq_num, tlp_seq_num, tlp_type, tag, lcrc, crc, our_crc)
    begin
       tx_data_int<= x"7C"; -- idl
       tx_data_k <= '1'; -- control byte
@@ -385,6 +385,10 @@ begin
       crc_clr <= '0';
       lcrc_clr <= '0';
       rxing <= '1';
+      crc_calc <= '0';
+      lcrc_calc <= '0';
+      ack <= '0';
+      ack_set <= '0';
       
       next_dllp_seq_num <= dllp_seq_num;
       next_tlp_seq_num <= tlp_seq_num;
@@ -404,7 +408,7 @@ begin
          when read_dummy_1 =>
             crc_calc <= '1';
          when read_addr_lo_lo =>
-            --lcrc_calc <= '1';
+            lcrc_calc <= '1';
             next_addr(7 downto 0) <= rx_data;
             if (addr(31 downto 8) & rx_data = x"00001000") then
                got_key <= '1';
