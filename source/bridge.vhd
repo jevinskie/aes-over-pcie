@@ -152,7 +152,7 @@ begin
       end if;
    end process completion_reg;
 
-   rcu_nsl : process(state, rx_data_k, send_completion, addr, i)
+   rcu_nsl : process(state, rx_data_k, send_completion, addr, i, tlp_type)
    begin
       next_state <= e_idle;
       case state is
