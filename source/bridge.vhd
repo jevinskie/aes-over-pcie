@@ -38,8 +38,12 @@ architecture behavioral of bridge is
    signal lcrc_clr, lcrc_calc : std_logic;
    signal rxing : std_logic;  
    signal tx_data_int : byte;
+   signal our_crc, next_our_crc : word;
+   signal our_lcrc, next_our_lcrc : dword;
+   signal ack_dec, next_ack_dec : std_logic;
+   signal ack, ack_set :std_logic;
 
-
+   
    function crc_gen (
       data  : byte;
       crc   : word
@@ -158,33 +162,33 @@ begin
       end if;
    end process i_nsl;
 
-   crc_nsl: process(crc_clr, crc_calc, crc)
+   crc_nsl: process(crc_clr, crc_calc, our_crc)
    begin
       if (crc_clr = '1') then
          next_crc <= (others => '1');
       elsif (crc_calc = '1') then
          if (rxing = '1') then
-            next_crc <= crc_gen(rx_data, crc);
+            next_our_crc <= crc_gen(rx_data, our_crc);
          else
-            next_crc <= crc_gen(tx_data_int, crc);
+            next_our_crc <= crc_gen(tx_data_int, our_crc);
          end if;
       else
-         next_crc <= crc;
+         next_our_crc <= our_crc;
       end if;
    end process crc_nsl;
 
-   lcrc_nsl: process(lcrc_clr, lcrc_calc, lcrc)
+   lcrc_nsl: process(lcrc_clr, lcrc_calc, our_lcrc)
    begin
-      if (lcrc_clr = '1') then
-         next_lcrc <= (others => '1');
+      if (lcrc_clr = '1') then        
+         next_our_lcrc <= (others => '1');
       elsif (lcrc_calc = '1') then
          if (rxing = '1') then
-            next_lcrc <= lcrc_gen(rx_data, lcrc);
+            next_our_lcrc <= lcrc_gen(rx_data, our_lcrc);
          else
-            next_lcrc <= lcrc_gen(tx_data_int, lcrc);
+            next_our_lcrc <= lcrc_gen(tx_data_int, our_lcrc);
          end if;
       else
-         next_lcrc <= lcrc;
+         next_our_lcrc <= our_lcrc;
       end if;
    end process lcrc_nsl;
    
@@ -199,10 +203,22 @@ begin
          tag <= next_tag;
          addr <= next_addr;
          crc <= next_crc;
+         our_crc <= next_our_crc;
          lcrc <= next_lcrc;
+         our_lcrc <= next_our_lcrc;
+         ack_dec <= next_ack_dec;
       end if;
    end process register_party;
    -- leda C_1406 off
+   
+   ack_dec_nsl: process(ack_dec, ack_set, ack)     
+   begin
+      if (ack_set = '1') then
+         next_ack_dec <= ack;
+      else 
+         next_ack_dec <= ack_dec;
+      end if;
+   end process ack_dec_nsl;        
    
    completion_reg: process(clk, nrst, aes_done, send_completion_clr)
    begin
@@ -221,6 +237,7 @@ begin
 
    rcu_nsl : process(state, rx_data_k, send_completion, addr, i)
    begin
+      next_state <= e_idle;
       case state is
          when idle =>
             if (rx_data_k = '0') then 
@@ -365,6 +382,9 @@ begin
       got_pt <= '0';
       send_ct <= '1';
       send_completion_clr <= '0';
+      crc_clr <= '0';
+      lcrc_clr <= '0';
+      rxing <= '1';
       
       next_dllp_seq_num <= dllp_seq_num;
       next_tlp_seq_num <= tlp_seq_num;
@@ -377,7 +397,14 @@ begin
       case state is
          when idle =>
             -- already logic idling
+            crc_clr <= '1';
+            lcrc_clr <= '1';
+         when read_dllp_type =>
+            crc_calc <= '1';
+         when read_dummy_1 =>
+            crc_calc <= '1';
          when read_addr_lo_lo =>
+            --lcrc_calc <= '1';
             next_addr(7 downto 0) <= rx_data;
             if (addr(31 downto 8) & rx_data = x"00001000") then
                got_key <= '1';
@@ -388,16 +415,24 @@ begin
             send_ct <= '1';
          when read_dllp_seq_num_hi =>
             next_dllp_seq_num(11 downto 8) <= rx_data(3 downto 0);
+            crc_calc <= '1';
          when read_dllp_seq_num_lo =>
             next_dllp_seq_num(7 downto 0) <= rx_data;
+            crc_calc <= '1';
          when read_tlp_seq_num_hi =>
             next_tlp_seq_num(11 downto 8) <= rx_data(3 downto 0);
          when read_tlp_seq_num_lo =>
             next_tlp_seq_num(7 downto 0) <= rx_data;
-         when read_crc_hi =>
+         when read_crc_hi => 
             next_crc(15 downto 8) <= rx_data;
-         when read_crc_lo =>
+         when read_crc_lo =>  --check vs our calculated CRC to determine ack or nak
             next_crc(7 downto 0) <= rx_data;
+            ack_set <= '1';
+            if (our_crc = crc(15 downto 8) & rx_data) then
+               ack <= '1';
+            else 
+               ack <= '0';
+            end if;
          when read_lcrc_hi_hi =>
             next_lcrc(31 downto 24) <= rx_data;
          when read_lcrc_hi_lo =>
@@ -407,19 +442,34 @@ begin
          when read_lcrc_lo_lo =>
             next_lcrc(7 downto 0) <= rx_data;
          when read_tlp_type =>
+            lcrc_calc <= '1';  
             next_tlp_type <= rx_data;
          when read_length_hi =>
-            -- nothing
+            lcrc_calc <= '1';
          when read_length_lo =>
-            -- nothing
+            lcrc_calc <= '1';
          when read_tag =>
+            lcrc_calc <= '1';
             next_tag <= rx_data;
          when read_addr_hi_hi =>
+            lcrc_calc <= '1';
             next_addr(31 downto 24) <= rx_data;
          when read_addr_hi_lo =>
+            lcrc_calc <= '1';
             next_addr(23 downto 16) <= rx_data;
          when read_addr_lo_hi =>
+            lcrc_calc <= '1';
             next_addr(15 downto 8) <= rx_data;
+         when load_payload =>
+            lcrc_calc <= '1'; 
+         when read_dummy_2 =>
+            lcrc_calc <= '1';
+         when read_requester_id_hi =>
+            lcrc_calc <= '1';
+         when read_requestor_id_lo =>
+            lcrc_calc <= '1'; 
+         when read_byte_enables =>
+            lcrc_calc <= '1';
          when send_lcrc_hi_hi =>
             tx_data_int<= lcrc(31 downto 24);
             tx_data_k <= '0';
