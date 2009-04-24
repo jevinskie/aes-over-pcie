@@ -33,6 +33,7 @@ architecture behavioral of bridge is
    signal i_up, i_clr                     : std_logic;
    signal crc, next_crc : word;
    signal lcrc, next_lcrc : dword;
+   signal send_completion, send_completion_clr : std_logic;
    
 begin
    
@@ -69,7 +70,7 @@ begin
    end process i_nsl;
 
    
-   register_party : process(clk, nrst)
+   register_party : process(clk)
    begin
       if rising_edge(clk) then
          dllp_seq_num <= next_dllp_seq_num;
@@ -82,11 +83,32 @@ begin
       end if;
    end process register_party;
        
-   rcu_nsl : process(state)
+   completion_reg: process(clk, nrst, aes_done, send_completion_clr)
+   begin
+      if (nrst = '0') then
+	      send_completion <= '0';
+      elsif rising_edge(clk) then 
+	      if (aes_done = '1') then
+            send_completion <= '1';
+         elsif (send_completion_clr = '1') then
+            send_completion <= '0';
+         else
+            send_completion <= send_completion;
+         end if;
+      end if;
+   end process completion_reg;
+
+   rcu_nsl : process(state, rx_data_k, send_completion, addr, i)
    begin
       case state is
          when idle =>
-            next_state <= read_dllp_type;
+            if (rx_data_k = '0') then 
+	            next_state <= read_dllp_type;
+	         elsif (send_completion = '1') then
+	            next_state <= send_dllp_type;
+	         else
+	            next_state <= idle;
+	         end if;
          when read_dllp_type =>
             next_state <= read_dummy_1;
          when read_dummy_1 =>
@@ -214,13 +236,14 @@ begin
       end case;
    end process rcu_nsl;
    
-   bridge_output : process(state)
+   bridge_output : process(state, addr, rx_data, tx_data_aes, dllp_seq_num, tlp_seq_num, tlp_type, tag, addr, lcrc, crc)
    begin
       tx_data <= x"7C"; -- idl
       tx_data_k <= '1'; -- control byte
       got_key <= '0';
       got_pt <= '0';
       send_ct <= '1';
+      send_completion_clr <= '0';
       
       next_dllp_seq_num <= dllp_seq_num;
       next_tlp_seq_num <= tlp_seq_num;
@@ -278,16 +301,78 @@ begin
             next_addr(15 downto 8) <= rx_data;
          when send_lcrc_hi_hi =>
             tx_data <= lcrc(31 downto 24);
-            tx_data_k <= '1';
+            tx_data_k <= '0';
          when send_lcrc_hi_lo =>
             tx_data <= lcrc(23 downto 16);
-            tx_data_k <= '1';
+            tx_data_k <= '0';
          when send_lcrc_lo_hi =>
             tx_data <= lcrc(15 downto 8);
-            tx_data_k <= '1';
+            tx_data_k <= '0';
          when send_lcrc_lo_lo =>
             tx_data <= lcrc(7 downto 0);
-            tx_data_k <= '1';
+            tx_data_k <= '0';
+	      when send_payload =>
+	         tx_data <= tx_data_aes;
+	         tx_data_k <= '0';
+	      when send_tag =>
+	         tx_data <= tag;
+	         tx_data_k <= '0';
+	      when send_dllp_type =>
+	         --send ack or nak depending
+	         tx_data <= "00000000";   --default as ack
+	         tx_data_k <= '0';
+         when send_dummy_1 =>
+	         tx_data <= "00000000";
+	         tx_data_k <= '0';
+         when send_dllp_seq_num_hi =>
+	         tx_data <= "0000" & dllp_seq_num(11 downto 8);
+	         tx_data_k <= '0';
+         when send_dllp_seq_num_lo =>
+	         tx_data <= dllp_seq_num(7 downto 0);
+	         tx_data_k <= '0';
+         when send_crc_hi =>
+	         tx_data <= crc(15 downto 8);
+	         tx_data_k <= '0';
+         when send_crc_lo =>
+	         tx_data <= crc(7 downto 0);
+	         tx_data_k <= '0';
+         when send_tlp_seq_num_hi =>
+	         tx_data <= "0000" & tlp_seq_num(11 downto 8);
+	         tx_data_k <= '0';
+         when send_tlp_seq_num_lo =>
+	         tx_data <= tlp_seq_num(7 downto 0);
+	         tx_data_k <= '0';
+         when send_tlp_type =>
+	         tx_data <= tlp_type;
+	         tx_data_k <= '0';
+         when send_dummy_2 =>
+	         tx_data <= "00000000";
+	         tx_data_k <= '0';
+         when send_tlp_length_hi =>
+	         tx_data <= "00000000";
+	         tx_data_k <= '0';
+         when send_tlp_length_lo =>
+	         tx_data <= "00000100";
+	         tx_data_k <= '0';
+         when send_completer_id_hi =>
+	         send_completion_clr <= '1';
+            tx_data <= "00000000";
+	         tx_data_k <= '0';
+         when send_completer_id_lo =>
+	         tx_data <= "00010001";
+	         tx_data_k <= '0';
+         when send_byte_count_hi => 
+	         tx_data <= "00000000";  ---first 3 bits are status, 000 for success
+	         tx_data_k <= '0';
+         when send_byte_count_lo =>
+	         tx_data <= "00010000";
+	         tx_data_k <= '0';
+         when send_requester_id_hi =>
+	         tx_data <= "00000000";
+	         tx_data_k <= '0';
+         when send_requester_id_lo =>
+	         tx_data <= "00000001";
+	         tx_data_k <= '0';
          when others =>
             -- get fucked
       end case;
