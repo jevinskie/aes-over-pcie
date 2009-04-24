@@ -357,7 +357,7 @@ begin
       end case;
    end process rcu_nsl;
    
-   bridge_output : process(state, addr, rx_data, tx_data_aes, dllp_seq_num, tlp_seq_num, tlp_type, tag, addr, lcrc, crc)
+   bridge_output : process(state, addr, rx_data, tx_data_aes, dllp_seq_num, tlp_seq_num, tlp_type, tag, lcrc, crc)
    begin
       tx_data_int<= x"7C"; -- idl
       tx_data_k <= '1'; -- control byte
