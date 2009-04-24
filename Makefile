@@ -33,7 +33,8 @@ TEST_ENTITIES =	aes_textio           \
 						tb_key_scheduler	   \
 						tb_mix_columns		   \
 						tb_sbox				   \
-						tb_shift_rows
+						tb_shift_rows			\
+						tb_top_top
 
 TEST_VECTORS =    tb_key_scheduler tb_mix_columns tb_shift_rows tb_aes_top
 
@@ -68,6 +69,7 @@ shift_rows: aes
 state_filter_in: aes
 state_filter_out: aes
 state: aes
+pcie: aes
 
 tb_add_round_key: aes
 tb_fifo: aes
@@ -77,6 +79,7 @@ tb_shift_rows: aes
 tb_aes_rcu: aes
 tb_aes_top: aes
 tb_key_scheduler: aes aes_textio
+tb_top_top: aes pcie
 aes_textio: aes numeric_std_textio
 
 work:
