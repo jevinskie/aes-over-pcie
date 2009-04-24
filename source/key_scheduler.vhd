@@ -148,7 +148,9 @@ begin
             sbox_lookup <= new_key(to_integer(to_unsigned(r, 2) + 1), 0);
             next_new_key(r, c) <= sbox_return_reged;
          when rcon =>
+            -- leda DFT_021 off
             next_new_key(0, 0) <= new_key(0, 0) xor rcon_tbl(round);
+            -- leda DFT_021 on
             c_clr <= '1';
             r_clr <= '1';
          when add_cols =>

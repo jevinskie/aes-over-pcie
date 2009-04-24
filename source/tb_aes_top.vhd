@@ -19,7 +19,7 @@ use ieee.numeric_std.all;
 entity tb_aes_top is
    
    generic (
-      clk_per  : time := 6 ns
+      clk_per  : time := 10 ns
    );
    
 end entity tb_aes_top;
@@ -31,10 +31,11 @@ architecture test of tb_aes_top is
    signal clk     : std_logic := '0';
    signal nrst    : std_logic := '1';
    signal rx_data : byte;
+   signal tx_data : byte;
+   signal send_ct : std_logic := '0';
    signal got_key : std_logic := '0';
    signal got_pt  : std_logic := '0';
    signal aes_done   : std_logic;
-   signal ct      : state_type;
    -- clock only runs when stop isnt asserted
    signal stop    : std_logic := '1';
    
@@ -45,7 +46,8 @@ begin
    dut : entity work.aes_top(structural) port map (
       clk => clk, nrst => nrst, rx_data => rx_data,
       got_key => got_key, got_pt => got_pt,
-      aes_done => aes_done, ct => ct
+      aes_done => aes_done, tx_data => tx_data,
+      send_ct => send_ct
    );
    
    
@@ -95,7 +97,15 @@ begin
          got_pt <= '0';
       end loop;
       wait until aes_done = '1';
-      assert ct = gold_ct;
+      wait for clk_per;
+      wait for clk_per/2;
+      send_ct <= '1';
+      wait for clk_per;
+      send_ct <= '0';
+      for i in g_index loop
+         assert tx_data = gold_ct(i mod 4, i / 4);
+         wait for clk_per;
+      end loop;
       wait for clk_per*10;
    end loop;
    -- leda DCVHDL_165 on
