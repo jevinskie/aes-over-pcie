@@ -44,6 +44,7 @@ architecture behavioral of bridge is
    signal ack, ack_set :std_logic;
    
    
+   
 begin
    
    
@@ -242,7 +243,11 @@ begin
             next_state <= send_crc_lo;
          when send_crc_lo =>
             -- either go to idle after an ack/nak or send the ct
-            -- next_state <= send_tlp_seq_num_hi;
+            if (tlp_type = "00001010") then  --type is CplD
+               next_state <= send_tlp_seq_num_hi;
+            else
+               next_state <= idle;
+            end if;
          when send_tlp_seq_num_hi =>
             next_state <= send_tlp_seq_num_lo;
          when send_tlp_seq_num_lo =>
@@ -410,8 +415,8 @@ begin
 	         tx_data_k <= '0';
 	      when send_dllp_type =>
 	         --send ack or nak depending
-	         tx_data_int<= "00000000";   --default as ack
-	         tx_data_k <= '0';
+	         tx_data_int <= "000" & ack_dec & "0000";
+            tx_data_k <= '0';
          when send_dummy_1 =>
 	         tx_data_int<= "00000000";
 	         tx_data_k <= '0';
@@ -465,7 +470,6 @@ begin
 	         tx_data_int<= "00000001";
 	         tx_data_k <= '0';
          when others =>
-            -- get fucked
       end case;
    end process bridge_output;
 
