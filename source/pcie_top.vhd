@@ -19,7 +19,7 @@ entity pcie_top is
       nrst           : in std_logic;
       rx_data        : in byte;          --
       rx_data_k      : in std_logic;   --
-      rx_status      : in rx_status_type;  --
+      rx_status      : in std_logic_vector(2 downto 0);  --
       rx_elec_idle   : in std_logic;
       phy_status     : in std_logic;
       rx_valid       : in std_logic;  --
@@ -29,7 +29,7 @@ entity pcie_top is
       tx_elec_idle   : out std_logic;
       tx_comp        : out std_logic;
       rx_pol         : out std_logic;
-      power_down     : out power_down_type;
+      power_down     : out std_logic_vector(1 downto 0);
       tx_data        : out byte;       --
       tx_data_k      : out std_logic; --
       got_key        : out std_logic; --
@@ -66,7 +66,7 @@ begin
 	tx_detect_rx <= '0';
 	tx_comp <= '0';
 	rx_pol <= '0';
-	power_down <= p0; 
+	power_down <= "00"; 
 
 	bridge_b : entity work.bridge(behavioral) port map (
       clk => clk, nrst => nrst, rx_data => rx_data,

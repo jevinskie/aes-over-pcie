@@ -29,7 +29,7 @@ architecture test of tb_top_top is
    signal nrst          : std_logic := '1';
    signal rx_data       : byte      := x"7C"; -- IDL
    signal rx_data_k     : std_logic := '1'; -- control byte
-   signal rx_status     : rx_status_type := rx_data_ok;
+   signal rx_status     : std_logic_vector(2 downto 0) := "000";
    signal rx_elec_idle  : std_logic := '0';
    signal phy_status    : std_logic := '0';
    signal rx_valid      : std_logic := '1';
@@ -37,7 +37,7 @@ architecture test of tb_top_top is
    signal tx_elec_idle  : std_logic;
    signal tx_comp       : std_logic;
    signal rx_pol        : std_logic;
-   signal power_down    : power_down_type;
+   signal power_down    : std_logic_vector(1 downto 0);
    signal tx_data       : byte;
    signal tx_data_k     : std_logic;
    

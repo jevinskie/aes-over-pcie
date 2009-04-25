@@ -24,16 +24,16 @@ package pcie is
       rx_data_ok, skp_add, skp_rem, rx_detect, eight_ten_error,
       elastic_buf_over, elastic_buf_under, rx_disparity_error
    );
-   attribute enum_encoding of rx_status_type : type is
-      "000 001 010 011 100 101 110 111";
+   --attribute enum_encoding of rx_status_type : type is
+   --   "000 001 010 011 100 101 110 111";
    
    type power_down_type is (p0, p0s, p1, p2);
-   attribute enum_encoding of power_down_type : type is
-      "00 01 10 11";
+   --attribute enum_encoding of power_down_type : type is
+   --   "00 01 10 11";
    
    type symbol_type is (idl);
-   attribute enum_encoding of symbol_type : type is
-      "01111100";
+   --attribute enum_encoding of symbol_type : type is
+   --   "01111100";
    
    function crc_gen(data : byte; crc : word) return word;
    function lcrc_gen(data : byte; lcrc : dword) return dword;
