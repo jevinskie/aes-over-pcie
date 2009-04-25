@@ -75,6 +75,7 @@ begin
    wait for clk_per;
       
    -- leda DCVHDL_165 off
+   file_open(f_status, data2, "test_vectors/tb_aes_top_test.dat", write_mode);
    while not endfile(data) loop
       readline(data, sample);
       hread(sample, gold_enc_key);
@@ -84,14 +85,12 @@ begin
 
       -- file write test, only writes the last line of the input file, not all the lines
       
-      file_open(f_status, data2, "test_vectors/tb_aes_top_test.dat", write_mode);
-      L1: hwrite(buf, gold_enc_key);
-      L2: write(buf, ' ');
-      L3: hwrite(buf, gold_pt);
-      L4: write(buf, ' ');
-      L5: hwrite(buf, gold_ct);
-      L6: writeline(data2, buf);
-      L7: file_close(data2);
+      hwrite(buf, gold_enc_key);
+      write(buf, ' ');
+      hwrite(buf, gold_pt);
+      write(buf, ' ');
+      hwrite(buf, gold_ct);
+      writeline(data2, buf);
 
       -- end file write test
       
@@ -123,6 +122,7 @@ begin
       end loop;
       wait for clk_per*10;
    end loop;
+   file_close(data2);
    -- leda DCVHDL_165 on
    
    stop <= '1';
