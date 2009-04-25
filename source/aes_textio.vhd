@@ -24,6 +24,8 @@ package aes_textio  is
    procedure read(l : inout line; value : out slice; good : out boolean);
    procedure hread(l : inout line; value : out slice);
    procedure hread(l : inout line; value : out slice; good : out boolean);
+   procedure hwrite(l : inout line; value : in byte; justified : in side := right; field : in width := 0);
+   procedure hwrite(l : inout line; value : in state_type; justified : in side := right; field : in width := 0);
 end package aes_textio;
 
 
@@ -31,6 +33,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use std.textio.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_textio.all;
 
 library work;
 use work.numeric_std_textio.all;
@@ -133,7 +136,18 @@ package body aes_textio is
    end procedure hread;   
    
    -- hwrite stuff
+   procedure hwrite(l : inout line; value : in byte; justified : in side := right; field : in width := 0) is
+   begin
+      hwrite(l, std_logic_vector(value), justified, field);
+   end procedure hwrite;
 
+   
+   procedure hwrite(l : inout line; value : in state_type; justified : in side := right; field : in width := 0) is
+   begin
+      for i in g_index loop
+         hwrite(l, value(i mod 4, i / 4), justified, field);
+      end loop;
+   end procedure hwrite;
 
    
 end package body aes_textio;
