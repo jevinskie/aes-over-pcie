@@ -42,6 +42,7 @@ architecture structural of top_top is
    signal send_ct : std_logic;
    signal aes_done   : std_logic;
    signal tx_data_aes : byte;
+   signal last_rx_data : byte;
    
 begin
    
@@ -58,9 +59,15 @@ begin
       got_key => got_key, got_pt => got_pt, send_ct => send_ct
    );
    
+   process(clk)
+   begin
+      if rising_edge(clk) then
+         last_rx_data <= rx_data;
+      end if;
+   end process;
    
 	aes_top_b : entity work.aes_top(structural) port map (
-		clk => clk, nrst => nrst, rx_data => rx_data,
+		clk => clk, nrst => nrst, rx_data => last_rx_data,
       got_key => got_key, got_pt => got_pt, send_ct => send_ct,
       aes_done => aes_done, tx_data => tx_data_aes
    );
