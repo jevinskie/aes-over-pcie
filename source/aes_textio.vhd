@@ -24,8 +24,6 @@ package aes_textio  is
    procedure read(l : inout line; value : out slice; good : out boolean);
    procedure hread(l : inout line; value : out slice);
    procedure hread(l : inout line; value : out slice; good : out boolean);
-   procedure hwrite(l : inout line; value : out byte);
-   procedure hwrite(l : inout line; value : out state_type; good : out boolean);
 end package aes_textio;
 
 
@@ -135,28 +133,6 @@ package body aes_textio is
    end procedure hread;   
    
    -- hwrite stuff
-
-   procedure hwrite(l : inout line; value : out byte) is
-      variable good : boolean;
-   begin
-      hwrite(l, std_logic_vector(value), good);
-      assert good
-         report "aes_textio: hwrite(line, byte) failed"
-         severity error;
-   end procedure hwrite;
-
-   
-   procedure hwrite(l : inout line; value : out state_type; good : out boolean) is
-      variable good_overall   : boolean;
-      variable good_temp      : boolean;
-   begin
-      good_overall := true;
-      for i in g_index loop
-         hwrite(l, value(i mod 4, i / 4), good_temp);
-         good_overall := good_overall and good_temp;
-      end loop;
-      good := good_overall;
-   end procedure hwrite;
 
 
    

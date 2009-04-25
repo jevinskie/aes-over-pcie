@@ -46,6 +46,12 @@ architecture test of tb_top_top is
    signal stop          : std_logic := '1';
    signal test_num      : natural := 0;
    
+   -- test signals
+   signal test_w        : word;
+   signal test_dw       : dword;
+   
+   constant null_payload : state_type := (others => (others => x"00"));
+   
    -- reset the device
    procedure reset (
       signal nrst : out std_logic
@@ -206,6 +212,141 @@ architecture test of tb_top_top is
       rx_data_k <= last_rx_data_k;
    end procedure tx_tlp_packet;
    
+   procedure rx_dllp_packet (
+      constant dllp_type   : byte;
+      constant dllp_seq    : seq_number_type;
+      signal tx_data       : in byte;
+      signal tx_data_k     : in std_logic
+   ) is
+      variable crc            : word := x"FFFF";
+   begin
+      wait until (tx_data_k /= '1' or tx_data /= x"7C");
+      wait for clk_per/2;
+      assert (tx_data_k = '1' and tx_data = x"FB");
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = dllp_type); -- ACK
+      crc := crc_gen(tx_data, crc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = x"00"); -- dummy
+      crc := crc_gen(tx_data, crc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = x"0" & dllp_seq(11 downto 8)); -- seq hi
+      crc := crc_gen(tx_data, crc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = dllp_seq(7 downto 0)); -- seq lo
+      crc := crc_gen(tx_data, crc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = crc(15 downto 8)); -- crc hi
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = crc(7 downto 0)); -- crc lo
+      wait for clk_per;
+      assert (tx_data_k = '1' and tx_data = x"FD"); -- END
+      wait for clk_per;
+      assert (tx_data_k = '1' and tx_data = x"7C"); -- IDL 
+   end procedure rx_dllp_packet;
+
+   procedure rx_tlp_packet (
+      constant dllp_type      : byte;
+      constant dllp_seq       : seq_number_type;
+      constant tlp_seq        : seq_number_type;
+      constant tlp_type       : byte;
+      constant length         : word;
+      constant requester_id   : word;
+      constant completer_id   : word;
+      constant tag            : byte;
+      constant byte_cnt       : word;
+      constant addr           : dword;
+      variable payload        : out state_type;
+      signal tx_data          : in byte;
+      signal tx_data_k        : in std_logic;
+      signal lcrc             : inout dword
+   ) is
+      variable crc            : word := x"FFFF";
+      --variable lcrc           : dword := x"FFFFFFFF";
+   begin
+      lcrc <= x"FFFFFFFF";
+      wait until (tx_data_k /= '1' or tx_data /= x"7C");
+      wait for clk_per/2;
+      assert (tx_data_k = '1' and tx_data = x"FB");
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = dllp_type); -- ACK
+      crc := crc_gen(tx_data, crc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = x"00"); -- dummy
+      crc := crc_gen(tx_data, crc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = x"0" & dllp_seq(11 downto 8)); -- seq hi
+      crc := crc_gen(tx_data, crc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = dllp_seq(7 downto 0)); -- seq lo
+      crc := crc_gen(tx_data, crc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = crc(15 downto 8)); -- crc hi
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = crc(7 downto 0)); -- crc lo
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = x"0" & tlp_seq(11 downto 8)); -- tlp seq hi
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = tlp_seq(7 downto 0)); -- tlp seq lo
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = tlp_type);
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = x"00"); -- dummy
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = length(15 downto 8)); -- length hi
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = length(7 downto 0)); -- length lo
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = completer_id(15 downto 8)); -- completer id hi
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = completer_id(7 downto 0)); -- completer id lo
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = byte_cnt(15 downto 8)); -- byte count hi
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = byte_cnt(7 downto 0)); -- byte count lo
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = requester_id(15 downto 8)); -- requester id hi
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = requester_id(7 downto 0)); -- requester id lo
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = tag);
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = '0' & addr(6 downto 0)); -- weird address thing
+      lcrc <= lcrc_gen(tx_data, lcrc);
+      wait for clk_per;
+      assert (length = 4); -- only read payloads of length 4 DWs now
+      for i in g_index loop
+         assert (tx_data_k = '0');
+         payload(i mod 4, i / 4) := tx_data;
+         lcrc <= lcrc_gen(tx_data, lcrc);
+         wait for clk_per;
+      end loop;
+      assert (tx_data_k = '0' and tx_data = lcrc(31 downto 24));
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = lcrc(23 downto 16));
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = lcrc(15 downto 8));
+      wait for clk_per;
+      assert (tx_data_k = '0' and tx_data = lcrc(7 downto 0));
+      wait for clk_per;
+      assert (tx_data_k = '1' and tx_data = x"FD"); -- END
+      wait for clk_per;
+      assert (tx_data_k = '1' and tx_data = x"7C"); -- IDL 
+   end procedure rx_tlp_packet;
+   
 begin
    
    dut : entity work.top_top(structural) port map (
@@ -232,7 +373,9 @@ process
    variable gold_enc_key   : key_type;
    variable gold_pt        : state_type;
    variable gold_ct        : state_type;
-   variable seq_num        : seq_number_type := (others => '0');
+   variable dllp_seq_num   : seq_number_type := (others => '0');
+   variable tlp_seq_num    : seq_number_type := x"010";
+   variable ct             : state_type;
    
 begin
    wait for clk_per*5;
@@ -254,15 +397,46 @@ begin
       hread(sample, gold_pt);
       hread(sample, gold_ct);
       
-      tx_tlp_packet(x"00", seq_num, seq_num, x"40", x"0004",
+      
+      -- send key memory write
+      tx_tlp_packet(x"00", dllp_seq_num, tlp_seq_num, x"40", x"0004",
          x"0000", x"00", x"FF", x"00001000", gold_enc_key,
          true, rx_data, rx_data_k);
+      
+      -- read key ack
+      rx_dllp_packet(x"00", dllp_seq_num, tx_data, tx_data_k);
+      dllp_seq_num := dllp_seq_num + 1;
+      tlp_seq_num := tlp_seq_num + 1;
       wait for clk_per*10;
-      tx_tlp_packet(x"00", seq_num, seq_num, x"40", x"0004",
+      
+      -- send pt memory write
+      tx_tlp_packet(x"00", dllp_seq_num, tlp_seq_num, x"40", x"0004",
          x"0000", x"00", x"FF", x"00002000", gold_pt,
          true, rx_data, rx_data_k);
-      wait for clk_per*1000;
       
+      -- read pt ack
+      rx_dllp_packet(x"00", dllp_seq_num, tx_data, tx_data_k);
+      dllp_seq_num := dllp_seq_num + 1;
+      tlp_seq_num := tlp_seq_num + 1;
+      wait for clk_per*10;
+      
+      -- send ct memory read
+      tx_tlp_packet(x"00", dllp_seq_num, tlp_seq_num, x"00", x"0004",
+         x"0001", x"00", x"FF", x"00003000", null_payload,
+         false, rx_data, rx_data_k);
+      
+      -- read ct ack
+      rx_dllp_packet(x"00", dllp_seq_num, tx_data, tx_data_k);
+      wait for clk_per*10;
+      
+      -- read ct completion
+      rx_tlp_packet(x"00", dllp_seq_num, tlp_seq_num, "00001010",
+         x"0004", x"0001", x"0011", x"00", x"0010", x"00003000", ct,
+         tx_data, tx_data_k, test_dw);
+      assert ct = gold_ct;
+      dllp_seq_num := dllp_seq_num + 1;
+      tlp_seq_num := tlp_seq_num + 1;
+      wait for clk_per*10;
    end loop;
    -- leda DCVHDL_165 on
 

@@ -22,7 +22,7 @@ entity bridge is
 end entity bridge;
 
 architecture behavioral of bridge is
-    type state_type is (read_special_end, send_byte_count_lo, send_dummy_2, read_dummy_2, send_tag, send_crc_lo, send_dummy_1, send_tlp_type, read_requester_id_hi, send_lcrc_lo_hi, send_completer_id_lo, send_lcrc_hi_lo, read_addr_hi_hi, read_crc_hi, read_addr_lo_lo, send_dllp_seq_num_lo, read_dllp_seq_num_hi, read_dllp_seq_num_lo, read_addr_hi_lo, e_idle, send_crc_hi, read_lcrc_hi_hi, send_lcrc_hi_hi, read_lcrc_lo_hi, read_requestor_id_lo, read_byte_enables, read_addr_lo_hi, send_lcrc_lo_lo, read_length_hi, send_dllp_type, idle, send_requester_id_lo, read_crc_lo, read_lcrc_lo_lo, send_dllp_seq_num_hi, read_tlp_type, send_addr_lo_lo, read_dllp_type, read_dummy_1, read_tag, send_payload, read_tlp_seq_num_lo, send_tlp_length_hi, load_payload, store_ct, read_lcrc_hi_lo, read_tlp_seq_num_hi, send_requester_id_hi, send_completer_id_hi, read_length_lo, send_byte_count_hi, send_tlp_seq_num_lo, send_tlp_seq_num_hi, send_tlp_length_lo, read_special_char, send_special_char, send_special_end);
+    type state_type is (read_special_end, send_byte_count_lo, send_dummy_2, read_dummy_2, send_tag, send_crc_lo, send_dummy_1, send_tlp_type, read_requester_id_hi, send_lcrc_lo_hi, send_completer_id_lo, send_lcrc_hi_lo, read_addr_hi_hi, read_crc_hi, read_addr_lo_lo, send_dllp_seq_num_lo, read_dllp_seq_num_hi, read_dllp_seq_num_lo, read_addr_hi_lo, e_idle, send_crc_hi, read_lcrc_hi_hi, send_lcrc_hi_hi, read_lcrc_lo_hi, read_requestor_id_lo, read_byte_enables, read_addr_lo_hi, send_lcrc_lo_lo, read_length_hi, send_dllp_type, idle, send_requester_id_lo, read_crc_lo, read_lcrc_lo_lo, send_dllp_seq_num_hi, read_tlp_type, send_addr_lo_lo, read_dllp_type, read_dummy_1, read_tag, send_payload, read_tlp_seq_num_lo, send_tlp_length_hi, load_payload, read_lcrc_hi_lo, read_tlp_seq_num_hi, send_requester_id_hi, send_completer_id_hi, read_length_lo, send_byte_count_hi, send_tlp_seq_num_lo, send_tlp_seq_num_hi, send_tlp_length_lo, read_special_char, send_special_char, send_special_end);
    signal state, next_state : state_type;
    signal dllp_seq_num, next_dllp_seq_num : seq_number_type;
    signal tlp_seq_num, next_tlp_seq_num : seq_number_type;
@@ -139,7 +139,7 @@ begin
       end if;
    end process ack_dec_nsl;        
    
-   completion_reg: process(clk, nrst, aes_done, send_completion_clr)
+   completion_reg: process(clk, nrst, aes_done, tlp_type, send_completion_clr)
    begin
       if (nrst = '0') then
 	      send_completion <= '0';
@@ -161,7 +161,7 @@ begin
          when idle =>
             if (rx_data /= x"7C") then 
 	            next_state <= read_special_char;
-	         elsif (send_completion = '1') then
+	         elsif (send_completion = '1' and tlp_type = x"00") then
 	            next_state <= send_special_char;
 	         else
 	            next_state <= idle;
@@ -222,7 +222,7 @@ begin
             elsif (addr(31 downto 8) & last_rx_data = x"00002000") then
                next_state <= load_payload;
             elsif (addr(31 downto 8) & last_rx_data = x"00003000") then
-               next_state <= store_ct;
+               next_state <= read_lcrc_hi_hi;
             else
                next_state <= e_idle;
             end if;
@@ -232,8 +232,6 @@ begin
             else
                next_state <= read_lcrc_hi_hi;
             end if;
-         when store_ct =>
-            next_state <= read_lcrc_hi_hi;
          when read_lcrc_hi_hi =>
             next_state <= read_lcrc_hi_lo;
          when read_lcrc_hi_lo =>
@@ -347,6 +345,8 @@ begin
             lcrc_clr <= '1';
          when read_special_char =>
             -- nothing?
+         when read_special_end =>
+            crc_clr <= '1';
          when send_special_char =>
             tx_data_int <= x"FB";
             tx_data_k <= '1';
@@ -363,6 +363,10 @@ begin
                got_pt <= '1';
             end if;
          when send_addr_lo_lo =>
+            tx_data_int <= "0" & addr(6 downto 0);
+            tx_data_k <= '0';
+            lcrc_calc <= '1';
+            rxing <= '0';
             send_ct <= '1';
          when read_dllp_seq_num_hi =>
             next_dllp_seq_num(11 downto 8) <= last_rx_data(3 downto 0);
@@ -424,16 +428,16 @@ begin
          when read_byte_enables =>
             lcrc_calc <= '1';
          when send_lcrc_hi_hi =>
-            tx_data_int<= lcrc(31 downto 24);
+            tx_data_int<= our_lcrc(31 downto 24);
             tx_data_k <= '0';
          when send_lcrc_hi_lo =>
-            tx_data_int<= lcrc(23 downto 16);
+            tx_data_int<= our_lcrc(23 downto 16);
             tx_data_k <= '0';
          when send_lcrc_lo_hi =>
-            tx_data_int<= lcrc(15 downto 8);
+            tx_data_int<= our_lcrc(15 downto 8);
             tx_data_k <= '0';
          when send_lcrc_lo_lo =>
-            tx_data_int<= lcrc(7 downto 0);
+            tx_data_int <= our_lcrc(7 downto 0);
             tx_data_k <= '0';
 	      when send_payload =>
             i_up <= '1';
@@ -450,8 +454,7 @@ begin
 	      when send_dllp_type =>
             crc_calc <= '1';
             rxing <= '0';
-	         --send ack or nak depending
-	         tx_data_int <= "000" & ack_dec & "0000";
+            tx_data_int <= "000" & ack_dec & "0000";
             tx_data_k <= '0';
          when send_dummy_1 =>
             crc_calc <= '1';
@@ -469,10 +472,10 @@ begin
 	         tx_data_int<= dllp_seq_num(7 downto 0);
 	         tx_data_k <= '0';
          when send_crc_hi =>
-	         tx_data_int<= crc(15 downto 8);
+	         tx_data_int<= our_crc(15 downto 8);
 	         tx_data_k <= '0';
          when send_crc_lo =>
-	         tx_data_int<= crc(7 downto 0);
+	         tx_data_int<= our_crc(7 downto 0);
 	         tx_data_k <= '0';
          when send_tlp_seq_num_hi =>
             send_completion_clr <= '1';
@@ -488,7 +491,7 @@ begin
          when send_tlp_type =>
             lcrc_calc <= '1';
             rxing <= '0';
-	         tx_data_int<= tlp_type;
+	         tx_data_int <= "00001010"; -- cpld
 	         tx_data_k <= '0';
          when send_dummy_2 =>
             lcrc_calc <= '1';
