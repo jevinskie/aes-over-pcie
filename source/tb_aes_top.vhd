@@ -58,21 +58,22 @@ process
    
    
    file data : text open read_mode is "test_vectors/tb_aes_top.dat";
-   variable sample         : line;
+   file data2 : text;
+   variable sample, buf    : line;
    variable gold_enc_key   : key_type;
    variable gold_pt        : state_type;
    variable gold_ct        : state_type;
+   variable f_status       : FILE_OPEN_STATUS;
    
    
-begin
-   
+begin   
    stop <= '0';
    
    nrst <= '0';
    wait for clk_per;
    nrst <= '1';
    wait for clk_per;
-   
+      
    -- leda DCVHDL_165 off
    while not endfile(data) loop
       readline(data, sample);
@@ -80,6 +81,20 @@ begin
       hread(sample, gold_pt);
       hread(sample, gold_ct);
       got_key <= '1';
+
+      -- file write test, only writes the last line of the input file, not all the lines
+      
+      file_open(f_status, data2, "test_vectors/tb_aes_top_test.dat", write_mode);
+      L1: hwrite(buf, gold_enc_key);
+      L2: write(buf, ' ');
+      L3: hwrite(buf, gold_pt);
+      L4: write(buf, ' ');
+      L5: hwrite(buf, gold_ct);
+      L6: writeline(data2, buf);
+      L7: file_close(data2);
+
+      -- end file write test
+      
       wait for clk_per;
       for i in g_index loop
          got_key <= '1';

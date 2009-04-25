@@ -24,8 +24,8 @@ package aes_textio  is
    procedure read(l : inout line; value : out slice; good : out boolean);
    procedure hread(l : inout line; value : out slice);
    procedure hread(l : inout line; value : out slice; good : out boolean);
-   procedure hwrite(l : inout line; value : out byte);
-   procedure hwrite(l : inout line; value : out state_type; good : out boolean);
+   procedure hwrite(l : inout line; value : in byte; justified : in side := right; field : in width := 0);
+   procedure hwrite(l : inout line; value : in state_type; justified : in side := right; field : in width := 0);
 end package aes_textio;
 
 
@@ -33,6 +33,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use std.textio.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_textio.all;
 
 library work;
 use work.numeric_std_textio.all;
@@ -136,26 +137,17 @@ package body aes_textio is
    
    -- hwrite stuff
 
-   procedure hwrite(l : inout line; value : out byte) is
-      variable good : boolean;
+   procedure hwrite(l : inout line; value : in byte; justified : in side := right; field : in width := 0) is
    begin
-      hwrite(l, std_logic_vector(value), good);
-      assert good
-         report "aes_textio: hwrite(line, byte) failed"
-         severity error;
+      hwrite(l, std_logic_vector(value), justified, field);
    end procedure hwrite;
 
    
-   procedure hwrite(l : inout line; value : out state_type; good : out boolean) is
-      variable good_overall   : boolean;
-      variable good_temp      : boolean;
+   procedure hwrite(l : inout line; value : in state_type; justified : in side := right; field : in width := 0) is
    begin
-      good_overall := true;
       for i in g_index loop
-         hwrite(l, value(i mod 4, i / 4), good_temp);
-         good_overall := good_overall and good_temp;
+         hwrite(l, value(i mod 4, i / 4), justified, field);
       end loop;
-      good := good_overall;
    end procedure hwrite;
 
 
