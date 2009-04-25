@@ -10,24 +10,7 @@ def gen_rand():
    return [[random.randint(0, 255) for j in range(0, 4)] for i in range(0, 4)]
 
 
-def hex_to_packed(hex):
-   p = ""
-   
-   for i in range(0, 4):
-      for j in range(0, 4):
-         p += chr(hex[j][i])
-   
-   return p
 
-
-def packed_to_hex(p):
-   hex = [[None for j in range(0, 4)] for i in range(0, 4)]
-   
-   for i in range(0, 4):
-      for j in range(0, 4):
-         hex[j][i] = ord(p[4*i + j])
-   
-   return hex
 
 
 e = aes.aes()
@@ -38,9 +21,9 @@ passed = 0
 for i in range(total):
    key = gen_rand()
    pt = gen_rand()
-   r = rijndael.rijndael(hex_to_packed(key), block_size = 16)
+   r = rijndael.rijndael(e.hex_to_packed(key), block_size = 16)
    ct = e.encblock(pt, key)
-   gold_ct = packed_to_hex(r.encrypt(hex_to_packed(pt)))
+   gold_ct = e.packed_to_hex(r.encrypt(e.hex_to_packed(pt)))
    
    if gold_ct != ct:
       print "ERROR in test vector #%i!" % i

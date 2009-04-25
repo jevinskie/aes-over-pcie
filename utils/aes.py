@@ -74,6 +74,23 @@ class aes:
             0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb
           )
    
+   def hex_to_packed(self, hex):
+      p = ""
+   
+      for i in range(0, 4):
+         for j in range(0, 4):
+            p += chr(hex[j][i])
+   
+      return p
+
+   def packed_to_hex(self, p):
+      hex = [[None for j in range(0, 4)] for i in range(0, 4)]
+   
+      for i in range(0, 4):
+         for j in range(0, 4):
+            hex[j][i] = ord(p[4*i + j])
+   
+      return hex
    
    def str_to_hex(self, str):
       assert len(str) == 32
