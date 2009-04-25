@@ -59,12 +59,14 @@ begin
       got_key => got_key, got_pt => got_pt, send_ct => send_ct
    );
    
+   -- leda C_1406 off
    process(clk)
    begin
       if rising_edge(clk) then
          last_rx_data <= rx_data;
       end if;
    end process;
+   -- leda C_1406 on
    
 	aes_top_b : entity work.aes_top(structural) port map (
 		clk => clk, nrst => nrst, rx_data => last_rx_data,

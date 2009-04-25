@@ -312,7 +312,7 @@ begin
       end case;
    end process rcu_nsl;
    
-   bridge_output : process(state, addr, rx_data, tx_data_aes, dllp_seq_num, tlp_seq_num, tlp_type, tag, lcrc, crc, our_crc)
+   bridge_output : process(state, addr, rx_data, tx_data_aes, dllp_seq_num, tlp_seq_num, tlp_type, tag, lcrc, crc, our_crc, ack_dec, last_rx_data, our_lcrc)
    begin
       tx_data_int <= x"7C"; -- idl
       tx_data_k <= '1'; -- control byte
@@ -439,19 +439,19 @@ begin
          when send_lcrc_lo_lo =>
             tx_data_int <= our_lcrc(7 downto 0);
             tx_data_k <= '0';
-	      when send_payload =>
+       when send_payload =>
             i_up <= '1';
             i_clr <= '0';
             lcrc_calc <= '1';
             rxing <= '0';
-	         tx_data_int<= tx_data_aes;
-	         tx_data_k <= '0';
-	      when send_tag =>
+          tx_data_int<= tx_data_aes;
+          tx_data_k <= '0';
+       when send_tag =>
             lcrc_calc <= '1';
             rxing <= '0';
-	         tx_data_int<= tag;
-	         tx_data_k <= '0';
-	      when send_dllp_type =>
+          tx_data_int<= tag;
+          tx_data_k <= '0';
+       when send_dllp_type =>
             crc_calc <= '1';
             rxing <= '0';
             tx_data_int <= "000" & ack_dec & "0000";
@@ -459,20 +459,20 @@ begin
          when send_dummy_1 =>
             crc_calc <= '1';
             rxing <= '0';
-	         tx_data_int<= "00000000";
-	         tx_data_k <= '0';
+          tx_data_int<= "00000000";
+          tx_data_k <= '0';
          when send_dllp_seq_num_hi =>
             crc_calc <= '1';
             rxing <= '0';
-	         tx_data_int<= "0000" & dllp_seq_num(11 downto 8);
-	         tx_data_k <= '0';
+          tx_data_int<= "0000" & dllp_seq_num(11 downto 8);
+          tx_data_k <= '0';
          when send_dllp_seq_num_lo =>
             crc_calc <= '1';
             rxing <= '0';
-	         tx_data_int<= dllp_seq_num(7 downto 0);
-	         tx_data_k <= '0';
+          tx_data_int<= dllp_seq_num(7 downto 0);
+          tx_data_k <= '0';
          when send_crc_hi =>
-	         tx_data_int<= our_crc(15 downto 8);
+          tx_data_int<= our_crc(15 downto 8);
 	         tx_data_k <= '0';
          when send_crc_lo =>
 	         tx_data_int<= our_crc(7 downto 0);
