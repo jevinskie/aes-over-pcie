@@ -44,7 +44,7 @@ begin
               key_done => done,
               current_round => current_round,
               got_pt => open,
-              got_key => open,
+              got_key => open
               );
               
   keysched: entity work.key_scheduler(behavioral) port map(
