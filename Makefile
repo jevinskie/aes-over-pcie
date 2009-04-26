@@ -102,10 +102,13 @@ all_tests: $(TEST_ENTITIES)
 
 all_test_vectors: $(TEST_VECTOR_DATS)
 
-encounter.io: $(UTILSDIR)/add_pads.pl $(MAPPEDDIR)/$(TOP_LEVEL).v
-	$(UTILSDIR)/add_pads.pl $(MAPPEDDIR)/$(TOP_LEVEL).v io > encounter.io
+encounter.io: $(UTILSDIR)/add_pads.pl
+	$(UTILSDIR)/add_pads.pl io > encounter.io
 
 add_pads: $(UTILSDIR)/add_pads.pl $(MAPPEDDIR)/$(TOP_LEVEL).v
-	$(UTILSDIR)/add_pads.pl $(MAPPEDDIR)/$(TOP_LEVEL).v v > tmp_v
+	$(UTILSDIR)/add_pads.pl v $(MAPPEDDIR)/$(TOP_LEVEL).v > tmp_v
 	mv tmp_v $(MAPPEDDIR)/$(TOP_LEVEL).v
+
+encounter.pt: $(UTILSDIR)/add_pads.pl
+	$(UTILSDIR)/add_pads.pl pt > encounter.pt
 

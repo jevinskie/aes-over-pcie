@@ -20,3 +20,5 @@ leda-libs/
 leda-logs/
 .leda_work/
 test_vectors/*.dat
+encounter.log*
+encounter.cmd*

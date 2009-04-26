@@ -34,18 +34,30 @@ foreach my $s (keys %sigs)
 my %c = (n => 0, s => 0, e => 0, w => 0);
 
 my $top = 'top_top';
+my $clk_per = 10;
 
-open my $f, '<', $ARGV[0];
-
-if ($ARGV[1] =~ /v/)
+if ($ARGV[0] eq 'v')
 {
+   open my $f, '<', $ARGV[1];
+   
    my $repeat = 0;
+   my $changed = 0;
    while (<$f>)
    {
       $repeat = 1 if /\/\/ processed/;
-      s/^module $top(?!_t)/module ${top}_t/;
+      if (m/^module ${top}_t/)
+      {
+         $changed = 1;
+      }
+      if (m/^module $top(?!_t)/ and not $changed)
+      {
+         s/module $top/module ${top}_t/;
+         $changed = 1;
+      }
       print;
    }
+   
+   close $f;
    
    exit if $repeat;
    
@@ -121,7 +133,7 @@ if ($ARGV[1] =~ /v/)
    }
    print "endmodule\n\n";
 }
-elsif ($ARGV[1] =~ /io/)
+elsif ($ARGV[0] eq 'io')
 {
    print <<TEXT;
 Version: 2
@@ -154,6 +166,58 @@ TEXT
          $c{$s}++;
          print "Pad: U$n " . uc($s) . " PADNC\n";
          $n++;
+      }
+   }
+}
+elsif ($ARGV[0] eq 'pt')
+{
+   print "create_clock -period $clk_per -waveform { 0 " . ($clk_per/2) . " } [get_ports {clk}]\n";
+   foreach my $s (keys %sigs)
+   {
+      if ($sigs{$s}{dir} eq 'inc')
+      {
+         if ($sigs{$s}{n} == 1)
+         {
+            print "set_driving_cell -lib_cell INVX8 [get_ports {$s}]\n"; 
+         }
+         else
+         {
+            foreach my $i (0 .. $sigs{$s}{n} - 1)
+            {
+               print "set_driving_cell -lib_cell INVX8 [get_ports {$s\[$i\]}]\n"; 
+            }
+         }
+      }
+      
+      next if $s eq 'clk';
+      
+      if ($sigs{$s}{dir} eq 'inc')
+      {
+         if ($sigs{$s}{n} == 1)
+         {
+            print "set_input_delay -clock clk 1.0000 [get_ports {$s}]\n";
+         }
+         else
+         {
+            foreach my $i (0 .. $sigs{$s}{n} - 1)
+            {
+               print "set_input_delay -clock clk 1.0000 [get_ports {$s\[$i\]}]\n";
+            }
+         }
+      }
+      elsif ($sigs{$s}{dir} eq 'out')
+      {
+         if ($sigs{$s}{n} == 1)
+         {
+            print "set_output_delay -clock clk 1.0000 [get_ports {$s}]\n";
+         }
+         else
+         {
+            foreach my $i (0 .. $sigs{$s}{n} - 1)
+            {
+               print "set_output_delay -clock clk 1.0000 [get_ports {$s\[$i\]}]\n";
+            }
+         }
       }
    }
 }
