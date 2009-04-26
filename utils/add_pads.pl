@@ -22,39 +22,79 @@ my %sigs = (
    gnd => {dir => 'gnd', n => 1, s => 'e'}
 );
 
-my %c = (n => 0, s => 0, e => 0, w => 0);
-
-open my $f, '<', $ARGV[0];
-open my $v, '>', "$ARGV[0]_n";
-open my $e, '>', 'e.io';
-
-while (<$f>)
+my @io = ();
+foreach my $s (keys %sigs)
 {
-   s/^module top_top/module top_top_t/;
-   #print;
+   if ($sigs{$s}{dir} =~ /inc|out/)
+   {
+      push @io, $s;
+   }
 }
 
-print 'module top_top (' . join(', ', keys %sigs) . " );\n";
+my %c = (n => 0, s => 0, e => 0, w => 0);
 
+my $top = 'top_top';
+
+open my $f, '<', $ARGV[0];
+
+if ($ARGV[1] =~ /v/)
+{
+   my $repeat = 0;
+   while (<$f>)
+   {
+      $repeat = 1 if /\/\/ processed/;
+      s/^module $top(?!_t)/module ${top}_t/;
+      print;
+   }
+   
+   exit if $repeat;
+   
+   print "// processed\n";
+   
+   print "module $top (" . join(', ', @io) . " );\n";
+   
+   foreach my $s (keys %sigs)
+   {
+      if ($sigs{$s}{dir} eq 'inc')
+      {
+         print 'input '
+      }
+      elsif ($sigs{$s}{dir} eq 'out')
+      {
+         print 'output ';
+      }
+      if ($sigs{$s}{n} > 1)
+      {
+         print '['. ($sigs{$s}{n} - 1) . ':0] ';
+      }
+      if ($sigs{$s}{dir} =~ /inc|out/)
+      {
+         print "$s;\n";
+      }
+   }
+   
    print 'wire n';
    my @a = ();
-   foreach my $sig (keys %sigs)
+   foreach my $s (keys %sigs)
    {
-      if ($sigs{$sig}{dir} =~ /inc|out/ and $sigs{$sig}{n} == 1)
+      if ($sigs{$s}{dir} =~ /inc|out/ and $sigs{$s}{n} == 1)
       {
-         push @a, "n$sig";
+         push @a, "n$s";
       }
    }
    print join(', n', @a), ";\n";
    
-   foreach my $sig (keys %sigs)
+   foreach my $s (keys %sigs)
    {
-      if ($sigs{$sig}{n} > 1)
+      if ($sigs{$s}{n} > 1)
       {
-         print 'wire [' . ($sigs{$sig}{n} - 1) . ":0] n$sig;\n";
+         print 'wire [' . ($sigs{$s}{n} - 1) . ":0] n$s;\n";
       }
    }
    
+   print "${top}_t IO ( ";
+   print join(', ', map(".$_(n$_)", @io)) . " );\n";
+
    my $n = 0;
    foreach my $s (keys %sigs)
    {
@@ -62,7 +102,6 @@ print 'module top_top (' . join(', ', keys %sigs) . " );\n";
       {
          print 'PAD' . uc($sigs{$s}{dir}) . " U$n (";
          $n++;
-         $c{$sigs{$s}}++;
          if ($sigs{$s}{dir} =~ /inc|out/)
          {
             print " .DO(n$s";
@@ -80,5 +119,42 @@ print 'module top_top (' . join(', ', keys %sigs) . " );\n";
          print " );\n";
       }
    }
+   print "endmodule\n\n";
+}
+elsif ($ARGV[1] =~ /io/)
+{
+   print <<TEXT;
+Version: 2
+
+Orient: R0
+Pad: C0 NW PADFC
+Orient: R270
+Pad: C1 NE PADFC
+Orient: R180
+Pad: C2 SE PADFC
+Orient: R90
+Pad: C3 SW PADFC
+TEXT
    
+   my $n = 0;
+   foreach my $s (keys %sigs)
+   {
+      foreach my $i (0 .. $sigs{$s}{n} - 1)
+      {
+         print "Pad: U$n " . uc($sigs{$s}{s}) . "\n";
+         $n++;
+         $c{$sigs{$s}{s}}++;
+      }
+   }
+   
+   foreach my $s (keys %c)
+   {
+      while ($c{$s} < 10)
+      {
+         $c{$s}++;
+         print "Pad: U$n " . uc($s) . " PADNC\n";
+         $n++;
+      }
+   }
+}
 

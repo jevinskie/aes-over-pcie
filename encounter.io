@@ -1,66 +1,50 @@
-# This file specifies how the pads are placed
-# The name of each pad here has to match the
-# name in the verilog code in the mapped directory
-# The Mosis padframe has 4 corners and 40 pads
-
-#The names of the pads need to be changed to match
-#the names in the verilog file!!!!
-
 Version: 2
 
 Orient: R0
-Pad: c01 NW PADFC
-
+Pad: C0 NW PADFC
 Orient: R270
-Pad: c02 NE PADFC
-
+Pad: C1 NE PADFC
 Orient: R180
-Pad: c03 SE PADFC
-
+Pad: C2 SE PADFC
 Orient: R90
-Pad: c04 SW PADFC
-
-Pad: RXDATA0 N    #need number here
-Pad: RXDATA1 N    #need number here
-Pad: RXDATA2 N    #need number here
-Pad: RXDATA3 N    #need number here
-Pad: RXDATA4 N    #need number here
-Pad: RXDATA5 N    #need number here
-Pad: RXDATA6 N    #need number here
-Pad: RXDATA7 N    #need number here
-Pad: RXDATAK N    #need number here
-Pad: U115 N PADNC  
-
-Pad: TXDATA0 S    #need number here
-Pad: TXDATA1 S    #need number here
-Pad: TXDATA2 S    #need number here
-Pad: TXDATA3 S    #need number here
-Pad: TXDATA4 S    #need number here
-Pad: TXDATA5 S    #need number here
-Pad: TXDATA6 S    #need number here
-Pad: TXDATA7 S    #need number here
-Pad: TXDATAK S    #need number here
-Pad: U116 S PADNC 
-
-Pad: NRST W       #need number here
-Pad: PCLK W       #need number here
-Pad: COMMAND0 W   #need number here
-Pad: COMMAND1 W   #need number here
-Pad: COMMAND2 W   #need number here
-Pad: COMMAND3 W   #need number here
-Pad: COMMAND4 W   #need number here
-Pad: COMMAND5 W   #need number here
-Pad: COMMAND6 W   #need number here
-Pad: U117 W PADNC
-
-Pad: VCC E        #need number here
-Pad: GND E        #need number here
-Pad: STATUS0 E    #need number here
-Pad: STATUS1 E    #need number here
-Pad: STATUS2 E    #need number here
-Pad: STATUS3 E    #need number here
-Pad: STATUS4 E    #need number here
-Pad: STATUS5 E    #need number here
-Pad: U10 E PADNC
-Pad: U11 E PADNC
-
+Pad: C3 SW PADFC
+Pad: U0 W
+Pad: U1 W
+Pad: U2 E
+Pad: U3 W
+Pad: U4 W
+Pad: U5 E
+Pad: U6 S
+Pad: U7 E
+Pad: U8 E
+Pad: U9 W
+Pad: U10 W
+Pad: U11 W
+Pad: U12 E
+Pad: U13 E
+Pad: U14 E
+Pad: U15 N
+Pad: U16 W
+Pad: U17 S
+Pad: U18 S
+Pad: U19 S
+Pad: U20 S
+Pad: U21 S
+Pad: U22 S
+Pad: U23 S
+Pad: U24 S
+Pad: U25 N
+Pad: U26 N
+Pad: U27 N
+Pad: U28 N
+Pad: U29 N
+Pad: U30 N
+Pad: U31 N
+Pad: U32 N
+Pad: U33 E
+Pad: U34 W PADNC
+Pad: U35 W PADNC
+Pad: U36 E PADNC
+Pad: U37 E PADNC
+Pad: U38 N PADNC
+Pad: U39 S PADNC

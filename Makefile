@@ -7,6 +7,8 @@ UTILSDIR = utils
 
 CFLAGS = -quiet
 
+TOP_LEVEL = top_top
+
 ENTITIES =	add_round_key		\
 				aes_rcu				\
 				aes_top				\
@@ -44,7 +46,7 @@ ENTITY_SRCS = $(foreach ent,$(ENTITIES),$(SRCDIR)/$(ent).vhd)
 TEST_ENTITY_SRCS = $(foreach test,$(TEST_ENTITES),$(SRCDIR)/$(test).vhd)
 TEST_VECTOR_DATS = $(foreach vect,$(TEST_VECTORS),$(TESTVECTDIR)/$(vect).dat)
 
-.PHONEY : clean_source clean_mapped all_source $(ENTITIES) $(TEST_ENTITIES)
+.PHONEY : clean_source clean_mapped all_source $(ENTITIES) $(TEST_ENTITIES) add_pads
 
 clean_source:
 	rm -rf work
@@ -99,4 +101,11 @@ all_source: $(ENTITIES)
 all_tests: $(TEST_ENTITIES)
 
 all_test_vectors: $(TEST_VECTOR_DATS)
+
+encounter.io: $(UTILSDIR)/add_pads.pl $(MAPPEDDIR)/$(TOP_LEVEL).v
+	$(UTILSDIR)/add_pads.pl $(MAPPEDDIR)/$(TOP_LEVEL).v io > encounter.io
+
+add_pads: $(UTILSDIR)/add_pads.pl $(MAPPEDDIR)/$(TOP_LEVEL).v
+	$(UTILSDIR)/add_pads.pl $(MAPPEDDIR)/$(TOP_LEVEL).v v > tmp_v
+	mv tmp_v $(MAPPEDDIR)/$(TOP_LEVEL).v
 
