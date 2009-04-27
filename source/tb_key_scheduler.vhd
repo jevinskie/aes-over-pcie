@@ -30,8 +30,6 @@ architecture test of tb_key_scheduler is
    
    signal clk              : std_logic := '0';
    signal nrst             : std_logic := '1';
-   signal sbox_lookup      : byte;
-   signal sbox_return      : byte;
    signal round            : round_type;
    signal key_data         : byte;
    signal key_load         : std_logic;
@@ -47,21 +45,13 @@ begin
    
    
    dut : entity work.key_scheduler(behavioral) port map (
-      clk => clk, nrst => nrst, sbox_lookup => sbox_lookup,
-      sbox_return => sbox_return, round => round,
+      clk => clk, nrst => nrst, round => round,
       round_key => round_key, key_data => key_data,
       key_load => key_load, key_index => key_index,
       go => go, done => done
    );
    
-   
-   sbox : entity work.sbox(dataflow) port map (
-      clk => clk, a => sbox_lookup, b => sbox_return
-   );
-   
-   
    clk <= not clk and not stop after clk_per/2;
-   
    
 process
    

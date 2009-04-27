@@ -76,3 +76,46 @@ begin
 	
 	
 end architecture structural;
+
+
+architecture structural_p of top_top is
+   
+   signal got_key : std_logic;
+   signal got_pt  : std_logic;
+   signal send_ct : std_logic;
+   signal aes_done   : std_logic;
+   signal tx_data_aes : byte;
+   signal last_rx_data : byte;
+   
+begin
+   
+   
+   pcie_top_b : entity work.pcie_top(structural) port map (
+      clk => clk, nrst => nrst, rx_data => rx_data,
+      rx_data_k => rx_data_k, rx_status => rx_status,
+      rx_elec_idle => rx_elec_idle, phy_status => phy_status,
+      rx_valid => rx_valid, tx_detect_rx => tx_detect_rx,
+      tx_elec_idle => tx_elec_idle, tx_comp => tx_comp,
+      rx_pol => rx_pol, power_down => power_down,
+      tx_data => tx_data, tx_data_k => tx_data_k,
+      tx_data_aes => tx_data_aes, aes_done => aes_done,
+      got_key => got_key, got_pt => got_pt, send_ct => send_ct
+   );
+   
+   -- leda C_1406 off
+   process(clk)
+   begin
+      if rising_edge(clk) then
+         last_rx_data <= rx_data;
+      end if;
+   end process;
+   -- leda C_1406 on
+   
+	aes_top_p_b : entity work.aes_top(structural_p) port map (
+		clk => clk, nrst => nrst, rx_data => last_rx_data,
+      got_key => got_key, got_pt => got_pt, send_ct => send_ct,
+      aes_done => aes_done, tx_data => tx_data_aes
+   );
+	
+	
+end architecture structural_p;

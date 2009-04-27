@@ -94,17 +94,77 @@ begin
    );
    
    key_scheduler_b : entity work.key_scheduler(behavioral) port map (
-      clk => clk, nrst => nrst, sbox_lookup => ks_sbox_lookup,
-      sbox_return => ks_sbox_return, round => round_num,
+      clk => clk, nrst => nrst, round => round_num,
       round_key => round_key, go => start_key, done => key_done,
       key_data => rx_data, key_index => i, key_load => key_load
-   );
-   
-   ks_sbox_b : entity work.sbox(dataflow) port map (
-      clk => clk, a => ks_sbox_lookup, b => ks_sbox_return
    );
    
    tx_data <= filtered(0);
    
 end architecture structural;
 
+architecture structural_p of aes_top is
+   
+   signal state_d, state_q    : state_type;
+   signal subblock            : subblock_type;
+   signal i                   : g_index;
+   signal round_num           : round_type;
+	signal round_key				: key_type;
+   signal sub_bytes_out       : state_type;
+   signal shift_rows_out      : state_type;
+   signal mix_columns_out     : state_type;
+   signal add_round_key_out   : state_type;
+   signal start_key           : std_logic;
+   signal key_done            : std_logic;
+   signal ks_sbox_lookup      : byte;
+   signal key_load            : std_logic;
+   signal ks_sbox_return      : byte;
+   
+begin
+   
+   
+   state_b : entity work.state(dataflow) port map (
+      clk => clk, state_d => state_d, state_q => state_q
+   );
+   
+   state_filter_out_p_b : entity work.state_filter_out_p(mux) port map (
+      current_state => state_q, sub_bytes_out => sub_bytes_out,
+      shift_rows_out => shift_rows_out, mix_columns_out => mix_columns_out,
+      add_round_key_out => add_round_key_out, load_out => rx_data,
+      subblock => subblock, i => i, next_state => state_d
+	);
+   
+   sub_bytes_p_b : entity work.sub_bytes_p(structural) port map (
+      d_in => state_q, d_out => sub_bytes_out
+   );
+   
+   shift_rows_p_b : entity work.shift_rows_p(behavioral) port map (
+      d_in => state_q, d_out => shift_rows_out
+   );
+   
+   mix_columns_p_b : entity work.mix_columns_p(behavioral) port map (
+      d_in => state_q, d_out => mix_columns_out
+   );
+   
+   add_round_key_p_b : entity work.add_round_key_p(dataflow) port map (
+      data_in => state_q, key_in => round_key,
+      data_out => add_round_key_out
+   );
+   
+   aes_rcu_b : entity work.aes_rcu(behavioral_p) port map (
+      clk => clk, nrst => nrst, p => i, subblock => subblock,
+      current_round => round_num, start_key => start_key,
+      key_done => key_done, key_load => key_load,
+      got_key => got_key, got_pt => got_pt, aes_done => aes_done,
+      send_ct => send_ct
+   );
+   
+   key_scheduler_p_b : entity work.key_scheduler(behavioral_p) port map (
+      clk => clk, nrst => nrst, round => round_num,
+      round_key => round_key, go => start_key, done => key_done,
+      key_data => rx_data, key_index => i, key_load => key_load
+   );
+   
+   tx_data <= state_q(i mod 4, i / 4);
+   
+end architecture structural_p;

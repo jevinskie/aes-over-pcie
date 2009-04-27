@@ -9,22 +9,27 @@ CFLAGS = -quiet
 
 TOP_LEVEL = top_top
 
-ENTITIES =	add_round_key		\
-				aes_rcu				\
-				aes_top				\
-				aes					\
-				bridge				\
-            fifo              \
-				key_scheduler		\
-				mix_columns			\
-				reduce_pack			\
-				pcie					\
-				pcie_top				\
-				sbox					\
-				shift_rows			\
-				state_filter_in	\
-				state_filter_out	\
-				state					\
+ENTITIES =	add_round_key		   \
+            add_round_key_p      \
+				aes_rcu				   \
+				aes_top				   \
+				aes					   \
+				bridge				   \
+            fifo                 \
+				key_scheduler		   \
+				mix_columns			   \
+            mix_columns_p        \
+				reduce_pack			   \
+				pcie					   \
+				pcie_top				   \
+				sbox					   \
+            sub_bytes_p          \
+				shift_rows			   \
+            shift_rows_p         \
+				state_filter_in	   \
+				state_filter_out	   \
+            state_filter_out_p   \
+				state					   \
 				top_top
 
 TEST_ENTITIES =	aes_textio           \
@@ -58,18 +63,24 @@ clean_test_vectors:
 	rm -f $(TEST_VECTOR_DATS)
 
 add_round_key: aes
+add_round_key_p: aes
 aes_rcu: aes
-aes_top: aes add_round_key aes_rcu key_scheduler	\
-	mix_columns sbox shift_rows state_filter_in		\
-	state_filter_out state
+aes_top: aes add_round_key add_round_key_p aes_rcu key_scheduler  \
+	mix_columns mix_columns_p sbox sub_bytes_p shift_rows          \
+   shift_rows_p state_filter_in state_filter_out                  \
+   state_filter_out_p state
 bridge: pcie aes
 fifo: aes
 key_scheduler: aes
 mix_columns: aes
+mix_columns_p: aes mix_columns
 sbox: aes reduce_pack
+sub_bytes_p: aes sbox
 shift_rows: aes
+shift_rows_p: aes shift_rows
 state_filter_in: aes
 state_filter_out: aes
+state_filter_out_p: aes
 state: aes
 pcie: aes
 

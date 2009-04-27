@@ -24,8 +24,6 @@ entity key_scheduler is
       key_data       : in byte;
       key_index      : in g_index;
       key_load       : in std_logic;
-      sbox_return    : in byte;
-      sbox_lookup    : out byte;
       round_key      : out key_type; 
       done           : out std_logic     
    );
@@ -64,10 +62,14 @@ architecture behavioral of key_scheduler is
    signal next_r           : index;
    signal r_clr            : std_logic;
    signal sbox_return_reged : byte;
+   signal sbox_lookup, sbox_return : byte;
    
    
 begin
    
+   sbox_b : entity work.sbox(dataflow) port map (
+      clk => clk, a => sbox_lookup, b => sbox_return
+   );
    
    -- leda C_1406 off
    state_reg : process(clk, nrst)
@@ -221,3 +223,145 @@ begin
    
 end behavioral;
 
+architecture behavioral_p of key_scheduler is
+   
+   
+   type state_type is (
+      idle, load_key, rot_sub_rcon, add_cols, be_done
+   );
+   
+   
+   signal state            : state_type;
+   signal next_state       : state_type;
+   signal cur_key          : key_type;
+   signal next_cur_key     : key_type;
+   signal new_key          : key_type;
+   signal next_new_key     : key_type;
+   signal c                : index;
+   signal next_c           : index;
+   signal c_clr            : std_logic;
+   signal c_up             : std_logic;
+   signal sbox_lookup, sbox_return : col;
+   
+   
+begin
+   
+   gen_sbox : for i in index generate
+      sbox_b : entity work.sbox(dataflow) port map (
+         clk => clk, a => sbox_lookup(i), b => sbox_return(i)
+      );
+   end generate gen_sbox;
+   
+   process(cur_key)
+   begin
+      for i in index loop
+         sbox_lookup(i) <= cur_key(to_integer(to_unsigned(i, 2) + 1), 3);
+      end loop;
+   end process;
+   
+   -- leda C_1406 off
+   state_reg : process(clk, nrst)
+   begin
+      if (nrst = '0') then
+         state <= idle;
+      elsif rising_edge(clk) then
+         state <= next_state;
+         cur_key <= next_cur_key;
+         new_key <= next_new_key;
+      end if;
+   end process state_reg;
+   -- leda C_1406 on
+   
+   state_nsl : process(state, go, c, round)
+   begin
+      next_state <= idle;
+      case state is
+         when idle =>
+            if (go = '1' and round = 0) then
+               next_state <= load_key;
+            elsif (go = '1') then
+               next_state <= rot_sub_rcon;
+            else
+               next_state <= idle;
+            end if;
+         when load_key =>
+            next_state <= be_done;
+         when rot_sub_rcon =>
+            next_state <= add_cols;
+         when add_cols =>
+            if (c = 3) then
+               next_state <= be_done;
+            else
+               next_state <= add_cols;
+            end if;
+         when be_done =>
+            next_state <= idle;
+      end case;
+   end process state_nsl;
+   
+   
+   state_out : process(state, cur_key, new_key, key_data,
+      key_index, key_load,
+      sbox_return, c, round)
+      variable temp_index : index;
+   begin
+      next_cur_key <= cur_key;
+      next_new_key <= new_key;
+      c_up <= '0';
+      c_clr <= '0';
+      done <= '0';
+      case state is
+         when idle =>
+            if (key_load = '1') then
+               next_new_key(key_index mod 4, key_index / 4) <= key_data;
+            end if;
+         when load_key =>
+            -- nothing
+         when rot_sub_rcon =>
+            for i in index loop
+               if (i = 0) then
+                  next_new_key(i, 0) <= sbox_return(i) xor rcon_tbl(round);
+               else
+                  next_new_key(i, 0) <= sbox_return(i);
+               end if;
+            end loop;
+            c_clr <= '1';
+         when add_cols =>
+            if (c = 0) then
+               temp_index := 0;
+            else
+               temp_index := c - 1;
+            end if;
+            for r in index loop
+               next_new_key(r, c) <= new_key(r, temp_index) xor cur_key(r, c);
+            end loop;
+            c_up <= '1';
+         when be_done =>
+            next_cur_key <= new_key;
+            done <= '1';
+      end case;
+   end process state_out;
+   
+   -- leda C_1406 off
+   c_counter_reg : process(clk)
+   begin
+      if rising_edge(clk) then
+         c <= next_c;
+      end if;
+   end process c_counter_reg;
+   -- leda C_1406 on
+   
+   c_counter_nsl : process(c, c_up, c_clr)
+   begin
+      if (c_clr = '1') then
+         next_c <= 0;
+      elsif (c_up = '1') then
+         next_c <= to_integer(to_unsigned(c, 2) + 1);
+      else
+         next_c <= c;
+      end if;
+   end process c_counter_nsl;
+   
+   round_key <= cur_key;
+   
+end behavioral_p;
