@@ -1,0 +1,36 @@
+# Layer map for converting from GDSII to Cadence format (SCMOS processes)
+
+# Cadence layer     Cadence layer purpose       GDSII layer
+# -------------     ---------------------       -----------
+metal1              drawing                     49  0
+metal2              drawing                     51  0
+metal3              drawing                     62  0
+via                 drawing                     50  0
+via2                drawing                     61  0
+nwell               drawing                     42  0
+pwell               drawing                     41  0
+active		    drawing			43  0
+nactive             drawing                     43  0
+pactive             drawing                     43  0
+nselect             drawing                     45  0
+pselect             drawing                     44  0
+poly                drawing                     46  0
+elec                drawing                     56  0
+cc                  drawing                     25  0
+cc                  drawing                     47  0
+cc                  drawing                     48  0
+ca		    drawing			25  0
+cp		    drawing			25  0
+ce		    drawing			25  0
+glass               drawing                     52  0
+pad                 drawing                     26  0
+highres             drawing                     34  0
+text                drawing                     63  0
+metal1              pin                         231 0
+metal2              pin                         233 0
+metal3              pin                         234 0
+instance            drawing                     236 0
+
+
+
+

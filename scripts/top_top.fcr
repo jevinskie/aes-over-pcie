@@ -12,7 +12,7 @@ elaborate top_top -arch "structural" -lib WORK -update
 # set_max_delay <delay> -from "<input>" -to "<output>"
 # set_max_area <area>
 # set_max_total_power <power> mW
-create_clock clk -name clk -period 6
+create_clock clk -name clk -period 10
 
 #current_design .
 
@@ -21,8 +21,10 @@ create_clock clk -name clk -period 6
 #uniquify
 
 # Step 3: Compile the design
-#compile -map_effort medium
-compile_ultra
+compile -map_effort medium
+#compile_ultra
+
+#optimize_registers -check_design -print_critical_loop
 
 # Step 4: Output reports
 current_design .

@@ -159,7 +159,7 @@ begin
       next_state <= e_idle;
       case state is
          when idle =>
-            if (rx_data /= x"7C") then 
+            if (rx_data /= x"7C" and rx_data_k = '1') then 
 	            next_state <= read_special_char;
 	         elsif (send_completion = '1' and tlp_type = x"00") then
 	            next_state <= send_special_char;

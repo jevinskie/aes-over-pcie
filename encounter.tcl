@@ -19,6 +19,7 @@ amoebaPlace
 # Route power nets
 sroute -noBlockPins -noPadRings
 
+puts "!!!!!!!!!! 1"
 
 # Perform trial route and get initial timing results
 trialroute
@@ -27,6 +28,8 @@ trialroute
 #buildTimingGraph
 #reportTA -nworst  10 -net > timing.rep.1.placed
 
+puts "!!!!!!!!!! 2"
+
 # Run in-place optimization
 # to fix setup problems
 setIPOMode -mediumEffort -fixDRC -addPortAsNeeded
@@ -34,10 +37,14 @@ initECO ./ipo1.txt
 fixSetupViolation
 endECO
 
+puts "!!!!!!!!!!!!!! 3"
+
 #uncomment below if you want to perform timing analysis
 #setAnalysisMode -setup -async -skew -autoDetectClockTree
 #buildTimingGraph
 #reportTA -nworst  10 -net > timing.rep.2.ipo1
+
+puts "!!!!!!!!!!!!!! 4"
 
 # Run Clock Tree Synthesis
 createClockTreeSpec -output encounter.cts -bufFootprint buf -invFootprint inv
@@ -103,8 +110,8 @@ extractRC
 #reportTA -nworst  10 -net > timing.rep.5.final
 
 # Output GDSII
-#streamOut final.gds2 -mapFile gds2_encounter.map -outputMacros -stripes 1 -units 1000 -mode ALL
-streamOut final.gds2
+streamOut final.gds2 -mapFile gds2_encounter.map -outputMacros -stripes 1 -units 1000 -mode ALL
+#streamOut final.gds2
 saveNetlist -excludeLeafCell final.v
 
 # Output DSPF RC Data
